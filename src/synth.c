@@ -23,7 +23,7 @@ bool note_is_black(int midi) {
 }
 
 KeyRect keyboard_rect(int index, KeyRect bounds) {
-    float white_width = bounds.width / 15.0f;
+    float white_width = bounds.width / WHITE_KEY_COUNT;
     int whites = 0;
     for (int i = 0; i < index; ++i)
         if (!note_is_black(i))
@@ -49,43 +49,121 @@ int keyboard_hit(float x, float y, KeyRect bounds) {
     return -1;
 }
 
+const char *tone_name(Tone tone) {
+    static const char *names[TONE_COUNT] = {"Piano", "Warm keys", "Bell", "Soft synth"};
+    return tone >= 0 && tone < TONE_COUNT ? names[tone] : "Unknown";
+}
+
+void synth_set_tone(Synth *synth, Tone tone) {
+    if (tone < 0 || tone >= TONE_COUNT || tone == synth->tone)
+        return;
+    synth->previous_tone = synth->tone;
+    synth->tone = tone;
+    synth->tone_mix = 0;
+}
+
 void synth_init(Synth *synth) {
     memset(synth, 0, sizeof(*synth));
     synth->volume = 0.65f;
+    synth->tone_mix = 1;
 }
 
 void synth_notes(Synth *synth, const bool held[MIDI_NOTES], bool sustain) {
-    for (int i = 0; i < MIDI_NOTES; ++i)
+    for (int i = 0; i < MIDI_NOTES; ++i) {
+        // Re-strike the string even if the sustain pedal still holds this note.
+        if (held[i] && !synth->held[i])
+            synth->age[i] = 0;
         synth->sounding[i] = held[i] || (sustain && synth->sounding[i]);
+        synth->held[i] = held[i];
+    }
 }
 
 void synth_silence(Synth *synth) {
     memset(synth->sounding, 0, sizeof(synth->sounding));
     memset(synth->level, 0, sizeof(synth->level));
+    memset(synth->held, 0, sizeof(synth->held));
+}
+
+// Additive partials model struck strings and sustained synthesizer oscillators.
+// Omit partials above Nyquist, including at the highest keyboard transpositions.
+static double partial(double phase, double frequency, double ratio) {
+    return frequency * ratio < SAMPLE_RATE * .45 ? sin(phase * ratio) : 0;
+}
+
+static double voice(Tone tone, double phase, double age, double frequency) {
+    double fundamental = sin(phase);
+    double decay = exp(-age * 1.6);
+    double attack = exp(-age * 5.0);
+    switch (tone) {
+    case TONE_PIANO: {
+        // A hammer excites a broad harmonic spectrum; upper partials die first.
+        // Two decay rates leave a quiet string tail without an organ-like sustain floor.
+        double damping = pow(frequency / 261.625565, .3);
+        double body = .78 * exp(-age * 1.8 * damping) + .22 * exp(-age * .45 * damping);
+        double sample = .7 * fundamental;
+        static const double weights[] = {0, 0, .42, .25, .15, .10, .07};
+        for (int harmonic = 2; harmonic <= 6; ++harmonic)
+            sample += weights[harmonic] * partial(phase, frequency, harmonic) *
+                      exp(-age * (1.0 + harmonic * 1.4) * damping);
+        double hammer =
+            .08 * (partial(phase, frequency, 8) + partial(phase, frequency, 9)) * exp(-age * 90);
+        return sample * body + hammer;
+    }
+    case TONE_WARM:
+        return (.9 * fundamental + .1 * decay * partial(phase, frequency, 2)) * (.4 + .6 * decay);
+    case TONE_BELL:
+        return (.65 * fundamental + .35 * partial(phase, frequency, 3) * exp(-age * 2) +
+                .18 * partial(phase, frequency, 7) * attack) *
+               exp(-age * 1.1);
+    case TONE_SOFT: {
+        // Rounded saw waves, with opposite detuning for slow beating on held notes.
+        double sample = 0;
+        for (int harmonic = 1; harmonic <= 10; ++harmonic) {
+            double detune = .0025;
+            if (frequency * harmonic * (1 + detune) >= SAMPLE_RATE * .45)
+                break;
+            double drift = TAU * age * frequency * harmonic * detune;
+            double weight = pow(.78, harmonic - 1) / harmonic;
+            sample += weight * .5 * (sin(phase * harmonic + drift) + sin(phase * harmonic - drift));
+        }
+        return sample * .85 * (1 - exp(-age * 35));
+    }
+    default:
+        return 0;
+    }
 }
 
 void synth_render(Synth *synth, float *buffer, size_t frames) {
     memset(buffer, 0, frames * sizeof(*buffer));
+    float initial_mix = synth->tone_mix;
     for (int note = 0; note < MIDI_NOTES; ++note) {
         if (!synth->sounding[note] && synth->level[note] < 0.00001f) {
             synth->level[note] = 0;
             continue;
         }
-        double step = TAU * note_frequency(note) / SAMPLE_RATE;
+        double frequency = note_frequency(note);
+        double step = TAU * frequency / SAMPLE_RATE;
         float target = synth->sounding[note] ? 1.0f : 0.0f;
-        // Short attack and longer release prevent clicks, retaining each
-        // oscillator's phase.
-        float rate = synth->sounding[note] ? 0.006f : 0.0012f;
+        float rate =
+            synth->sounding[note] ? 0.006f : (synth->tone == TONE_SOFT ? 0.0003f : 0.0012f);
+        float mix = initial_mix;
         for (size_t frame = 0; frame < frames; ++frame) {
             synth->level[note] += (target - synth->level[note]) * rate;
-            buffer[frame] += (float)sin(synth->phase[note]) * synth->level[note] * 0.18f;
+            mix = fminf(1, mix + 1.0f / (SAMPLE_RATE * .025f));
+            double sample = voice(synth->tone, synth->phase[note], synth->age[note], frequency);
+            if (mix < 1) {
+                double previous =
+                    voice(synth->previous_tone, synth->phase[note], synth->age[note], frequency);
+                sample = previous + mix * (sample - previous);
+            }
+            buffer[frame] += (float)sample * synth->level[note] * .22f;
             synth->phase[note] += step;
+            synth->age[note] += 1.0 / SAMPLE_RATE;
             if (synth->phase[note] >= TAU)
                 synth->phase[note] -= TAU;
         }
     }
-    // Soft saturation bounds even large sustained chords without gain jumps on
-    // note changes.
+    synth->tone_mix = fminf(1, initial_mix + (float)frames / (SAMPLE_RATE * .025f));
     for (size_t frame = 0; frame < frames; ++frame)
         buffer[frame] = tanhf(buffer[frame]) * synth->volume;
 }

@@ -1,8 +1,8 @@
 # alt-synth
 
-A small polyphonic desktop synthesizer written in C with Raylib. Play a two-octave
-piano from your computer keyboard or mouse. Held notes light up on screen; the
-waveform shows the audio output and the pitch display shows each voice's envelope.
+A small polyphonic desktop synthesizer written in C with Raylib. Play a piano from
+your computer keyboard or mouse. Held notes light up on screen; the waveform shows
+the audio output and the pitch display shows active voices.
 
 ## Build and run
 
@@ -49,8 +49,9 @@ set `PKG_CONFIG_PATH`, or supply both `RAYLIB_CFLAGS` and `RAYLIB_LIBS`.
 
 | Controls | Action |
 | --- | --- |
-| `Z S X D C V G B H N J M` | Lower octave, chromatically from C to B |
-| `Q 2 W 3 E R 5 T 6 Y 7 U I` | Upper octave, from C through the next C |
+| `A S D F G H J K L ; '` | White keys, from C through the following F |
+| `W E T Y U O P` | Black keys in the row above their white-key gaps |
+| Filter button / `Tab` | Cycle piano, warm keys, bell, and soft synth |
 | Left mouse button | Hold or drag across the piano to play |
 | `Space` | Hold the sustain pedal |
 | `←` / `→` | Shift the keyboard down / up an octave |
@@ -59,14 +60,21 @@ set `PKG_CONFIG_PATH`, or supply both `RAYLIB_CFLAGS` and `RAYLIB_LIBS`.
 | `F1` | Open / close help |
 | `Esc` | Close help, or quit |
 
-The initial range is C3–C5. Play several keys together for chords. Amber keys are
-held; green keys are sustained. Releasing Space releases sustained notes.
+The initial range is C3–F4, with all 11 white keys on the home row. Play several
+keys together for chords. Amber keys are held; green keys are sustained. Releasing Space releases sustained notes.
 Changing octave clears previous notes. Opening help or leaving the window silences
 notes; release the playing controls before starting again. Computer keyboards may
 limit how many simultaneous key presses they can report.
 
-The pitch bars show synthesizer voice levels on a fixed C1–C8 axis, not an FFT or
-input from a microphone. The keyboard uses MIDI note numbers internally; external
+The default **Piano** tone uses a hammer-like attack and decaying string harmonics:
+bright overtones fade quickly, leaving a quieter fundamental and string tail.
+The **Filter** button cycles Piano, Warm keys, Bell, and Soft synth. Soft synth
+uses rounded, detuned saw waves with a softer attack and longer release; it stays
+full while a key is held. These sounds are synthesized rather than sampled.
+Switching presets preserves held notes and crossfades briefly.
+
+The pitch bars show synthesizer voice gate levels on a fixed C1–C8 axis, not an
+FFT or input from a microphone. The keyboard uses MIDI note numbers internally; external
 MIDI devices are not connected yet.
 
 ## Development
@@ -78,7 +86,8 @@ CFLAGS='-O0 -g' ./build.sh
 ```
 
 Tests cover note frequencies, keyboard geometry and hit detection, polyphonic
-output, sustain, release envelopes, and silence. They run without Raylib or a
+output, sound presets, piano overtone decay and re-strikes, sustained synth
+harmonics, sustain, release envelopes, and silence. They run without Raylib or a
 display. Check the window, held-key highlighting, and audio manually after a UI
 change. Remove `bin/` to clean app build output; keep `.deps/` to retain Raylib.
 

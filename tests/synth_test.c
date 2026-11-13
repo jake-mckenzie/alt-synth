@@ -7,7 +7,7 @@
 
 static void test_keyboard(void) {
     KeyRect bounds = {20, 30, 900, 240};
-    // Every key is selectable at its label area, including the last C.
+    // Every key is selectable at its label area, including the last F.
     for (int i = 0; i < KEY_COUNT; ++i) {
         KeyRect key = keyboard_rect(i, bounds);
         assert(keyboard_hit(key.x + key.width / 2, key.y + key.height - 10, bounds) == i);
@@ -58,6 +58,106 @@ static void test_sound(void) {
         assert(!synth.sounding[i]);
 }
 
+static double energy(const float *samples, size_t count) {
+    double total = 0;
+    for (size_t i = 0; i < count; ++i)
+        total += samples[i] * samples[i];
+    return total / count;
+}
+
+static void test_tones(void) {
+    float samples[4410], piano[4410];
+    bool held[MIDI_NOTES] = {false};
+    held[60] = true;
+    for (int tone = 0; tone < TONE_COUNT; ++tone) {
+        Synth synth;
+        synth_init(&synth);
+        synth_set_tone(&synth, (Tone)tone);
+        synth_notes(&synth, held, false);
+        synth_render(&synth, samples, 4410);
+        assert(synth.tone_mix == 1);
+        assert(energy(samples, 4410) > .0001);
+        if (tone == TONE_PIANO)
+            memcpy(piano, samples, sizeof(piano));
+        else {
+            double difference = 0;
+            for (int i = 0; i < 4410; ++i)
+                difference += fabs(samples[i] - piano[i]);
+            assert(difference > 1); // Each preset must produce a different waveform.
+        }
+        // Dense chords remain bounded in every sound mode.
+        bool all[MIDI_NOTES];
+        for (int i = 0; i < MIDI_NOTES; ++i)
+            all[i] = true;
+        synth_notes(&synth, all, false);
+        synth_render(&synth, samples, 4410);
+        for (int i = 0; i < 4410; ++i)
+            assert(isfinite(samples[i]) && fabsf(samples[i]) <= synth.volume);
+    }
+    Synth synth;
+    synth_init(&synth);
+    assert(synth.tone == TONE_PIANO);
+    synth_notes(&synth, held, false);
+    synth_render(&synth, samples, 4410);
+    double attack_energy = energy(samples, 4410);
+    for (int i = 0; i < 30; ++i)
+        synth_render(&synth, samples, 4410);
+    assert(energy(samples, 4410) < attack_energy * .3); // Piano notes decay while held.
+    held[60] = false;
+    synth_notes(&synth, held, true);
+    assert(synth.sounding[60]);
+    held[60] = true;
+    synth_notes(&synth, held, true);
+    assert(synth.age[60] == 0); // Pedal-held notes can be struck again.
+    synth_render(&synth, samples, 4410);
+    assert(energy(samples, 4410) > attack_energy * .8);
+    synth_set_tone(&synth, TONE_SOFT);
+    assert(synth.sounding[60]); // Changing sound preserves held notes.
+    synth_render(&synth, samples, 4410);
+    assert(synth.tone_mix == 1);
+}
+
+// Measure harmonic content relative to the fundamental, independent of volume.
+static double harmonic_ratio(const float *samples, size_t count, double frequency) {
+    double powers[4] = {0};
+    for (int harmonic = 1; harmonic <= 4; ++harmonic) {
+        double real = 0, imaginary = 0;
+        for (size_t i = 0; i < count; ++i) {
+            double phase = 6.283185307179586 * frequency * harmonic * i / SAMPLE_RATE;
+            real += samples[i] * cos(phase);
+            imaginary += samples[i] * sin(phase);
+        }
+        powers[harmonic - 1] = real * real + imaginary * imaginary;
+    }
+    assert(powers[0] > .000001);
+    return (powers[1] + powers[2] + powers[3]) / powers[0];
+}
+
+static void test_piano_and_synth_character(void) {
+    double piano_tail = 0;
+    for (int mode = 0; mode < 2; ++mode) {
+        Synth synth;
+        synth_init(&synth);
+        synth_set_tone(&synth, mode ? TONE_SOFT : TONE_PIANO);
+        bool held[MIDI_NOTES] = {false};
+        held[57] = true; // A3, 220 Hz: an exact number of cycles per buffer.
+        synth_notes(&synth, held, false);
+        float samples[4410];
+        synth_render(&synth, samples, 4410);
+        double attack_harmonics = harmonic_ratio(samples, 4410, 220);
+        for (int i = 0; i < 10; ++i)
+            synth_render(&synth, samples, 4410);
+        double tail_harmonics = harmonic_ratio(samples, 4410, 220);
+        if (!mode) {
+            assert(tail_harmonics < attack_harmonics * .1);
+            piano_tail = tail_harmonics;
+        } else {
+            assert(tail_harmonics > .02);
+            assert(tail_harmonics > piano_tail * 10);
+        }
+    }
+}
+
 int main(void) {
     char name[8];
     assert(fabs(note_frequency(69) - 440) < .00001);
@@ -68,7 +168,9 @@ int main(void) {
     assert(strcmp(name, "C#4") == 0);
     test_keyboard();
     test_sound();
-    puts("All pitch, keyboard, polyphony, sustain, release, and silence tests "
+    test_tones();
+    test_piano_and_synth_character();
+    puts("All pitch, keyboard, tone, polyphony, sustain, release, and silence tests "
          "passed.");
     return 0;
 }
