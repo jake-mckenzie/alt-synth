@@ -60,8 +60,8 @@ set `PKG_CONFIG_PATH`, or supply both `RAYLIB_CFLAGS` and `RAYLIB_LIBS`.
 | `F1` | Open / close help |
 | `Esc` | Close help, or quit |
 
-The initial range is C3–F4, with all 11 white keys on the home row. Play several
-keys together for chords. Amber keys are held; green keys are sustained. Releasing Space releases sustained notes.
+The initial range is C4–F5, starting at middle C, with all 11 white keys on the
+home row. Play several keys together for chords. Amber keys are held; green keys are sustained. Releasing Space releases sustained notes.
 Changing octave clears previous notes. Opening help or leaving the window silences
 notes; release the playing controls before starting again. Computer keyboards may
 limit how many simultaneous key presses they can report.

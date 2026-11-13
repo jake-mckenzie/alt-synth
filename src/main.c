@@ -115,21 +115,56 @@ static void draw_pitches(Rectangle r, const Synth *synth) {
     }
 }
 
+static void help_row(float x, float y, const char *keys, const char *action) {
+    text(keys, x, y, 16, accent);
+    text(action, x + 150, y, 16, text_color);
+}
+
 static void draw_help(int width, int height) {
     DrawRectangle(0, 0, width, height, Fade(BLACK, .75f));
     float box_width = fminf(width - 64, 1080);
-    Rectangle box = {(width - box_width) / 2, (height - 440) / 2.0f, box_width, 440};
-    panel(box, "PLAYING alt-synth");
-    const char *lines[] = {"White keys: A S D F G H J K L ; '",
-                           "Black keys: W E   T Y U   O P",
-                           "Hold multiple keys for chords. Release to stop.",
-                           "Mouse: hold or drag across the piano to play.",
-                           "Space: sustain    Left / right: shift octave",
-                           "- / =: volume    Backspace: silence all notes",
-                           "Filter button / Tab: cycle piano and synth sounds",
-                           "F1: help         Esc: close help / quit"};
-    for (int i = 0; i < 8; ++i)
-        text(lines[i], box.x + 24, box.y + 65 + i * 43, 18, text_color);
+    Rectangle box = {(width - box_width) / 2, (height - 536) / 2.0f, box_width, 536};
+    panel(box, "alt-synth / keyboard help");
+    float left = box.x + 24;
+    text("Hold notes for chords. Release keys to stop.", left, box.y + 56, 16, text_color);
+
+    // Keycaps follow the piano's staggered layout, using the same labels as the keys.
+    float key_start = left + 136;
+    float unit = (box.width - 48 - 136) / WHITE_KEY_COUNT;
+    int whites = 0;
+    text("BLACK KEYS", left, box.y + 112, 14, muted);
+    text("WHITE KEYS", left, box.y + 158, 14, muted);
+    for (int i = 0; i < KEY_COUNT; ++i) {
+        bool black = note_is_black(i);
+        float cap_width = unit - 10;
+        float x = key_start + whites * unit + 5;
+        float y = box.y + 148;
+        if (black) {
+            x = key_start + whites * unit - cap_width / 2;
+            y = box.y + 102;
+        } else
+            ++whites;
+        Rectangle cap = {x, y, cap_width, 38};
+        DrawRectangleRounded(cap, .15f, 6, black ? background : border);
+        DrawRectangleRoundedLinesEx(cap, .15f, 6, 1, black ? border : muted);
+        centered(labels[i], cap, 17, black ? accent : text_color);
+    }
+
+    float divider_y = box.y + 210;
+    DrawLineEx((Vector2){left, divider_y}, (Vector2){box.x + box.width - 24, divider_y}, 1, border);
+    float right = box.x + box.width / 2 + 16;
+    text("PLAYING", left, box.y + 232, 14, muted);
+    text("CONTROLS", right, box.y + 232, 14, muted);
+    help_row(left, box.y + 274, "Mouse", "Hold / drag notes");
+    help_row(left, box.y + 316, "Space", "Hold sustain");
+    help_row(left, box.y + 358, "Left/Right", "Shift octave");
+    help_row(left, box.y + 400, "- / =", "Adjust volume");
+    help_row(right, box.y + 274, "Tab/Filter", "Cycle sounds");
+    help_row(right, box.y + 316, "Backspace", "Silence notes");
+    help_row(right, box.y + 358, "F1", "Toggle help");
+    help_row(right, box.y + 400, "Esc", "Close help");
+
+    text("Esc quits when help is closed.", left, box.y + 478, 14, muted);
 }
 
 int main(int argc, char **argv) {
@@ -173,7 +208,7 @@ int main(int argc, char **argv) {
         else
             PlayAudioStream(stream);
     }
-    int base = 48;
+    int base = 60; // C4 (middle C).
     bool help = false, quit = false, sustain = false, blocked = false;
     while (!quit && !WindowShouldClose()) {
         int width = GetScreenWidth(), height = GetScreenHeight();
@@ -258,24 +293,24 @@ int main(int argc, char **argv) {
         note_name(base + KEY_COUNT - 1, last, sizeof(last));
         snprintf(status, sizeof(status), "%s-%s  VOL %d%%  SUSTAIN %s", first, last,
                  (int)lroundf(synth.volume * 100), sustain ? "ON" : "OFF");
-        text(status, margin, 82, 18, text_color);
+        text(status, margin, 80, 22, text_color);
         if (!audio_ready)
-            text("AUDIO UNAVAILABLE", width - 285, 36, 16, accent);
+            text("AUDIO UNAVAILABLE", width - 345, 32, 20, accent);
         else
-            text("F1 HELP", width - 135, 36, 16, muted);
+            text("F1 HELP", width - 155, 32, 20, muted);
         bool filter_hover = CheckCollisionPointRec(GetMousePosition(), filter_button) && !help;
         DrawRectangleRounded(filter_button, .15f, 8, filter_hover ? border : panel_color);
         DrawRectangleRoundedLinesEx(filter_button, .15f, 8, 1, accent);
         char filter_label[64];
         snprintf(filter_label, sizeof(filter_label), "FILTER: %s", tone_name(synth.tone));
-        centered(filter_label, filter_button, 17, accent);
+        centered(filter_label, filter_button, 20, accent);
         draw_wave((Rectangle){margin, graph_y, graph_width, graph_height}, samples);
         draw_pitches((Rectangle){margin + graph_width + gap, graph_y, graph_width, graph_height},
                      &synth);
         panel(keyboard_panel, "HOLD KEYS TO PLAY / SPACE TO SUSTAIN");
         draw_keyboard(keys, base, held, &synth);
-        text("ARROWS octave    - / = volume    BACKSPACE silence    ESC quit", margin, height - 23,
-             14, muted);
+        text("ARROWS octave   -/= volume   BACKSPACE silence   ESC quit", margin, height - 29, 18,
+             muted);
         if (help)
             draw_help(width, height);
         EndDrawing();
