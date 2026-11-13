@@ -9,7 +9,7 @@
 #define KEY_COUNT 18
 #define WHITE_KEY_COUNT 11
 
-typedef enum { TONE_PIANO, TONE_WARM, TONE_BELL, TONE_SOFT, TONE_COUNT } Tone;
+typedef enum { TONE_PIANO, TONE_WARM, TONE_BELL, TONE_SOFT, TONE_CHIPTUNE, TONE_COUNT } Tone;
 
 typedef struct {
     double phase[MIDI_NOTES];

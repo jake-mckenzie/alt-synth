@@ -51,7 +51,7 @@ set `PKG_CONFIG_PATH`, or supply both `RAYLIB_CFLAGS` and `RAYLIB_LIBS`.
 | --- | --- |
 | `A S D F G H J K L ; '` | White keys, from C through the following F |
 | `W E T Y U O P` | Black keys in the row above their white-key gaps |
-| Filter button / `Tab` | Cycle piano, warm keys, bell, and soft synth |
+| Filter button / `Tab` | Cycle piano, warm keys, bell, soft synth, and chiptune |
 | Left mouse button | Hold or drag across the piano to play |
 | `Space` | Hold the sustain pedal |
 | `←` / `→` | Shift the keyboard down / up an octave |
@@ -66,11 +66,14 @@ Changing octave clears previous notes. Opening help or leaving the window silenc
 notes; release the playing controls before starting again. Computer keyboards may
 limit how many simultaneous key presses they can report.
 
-The default **Piano** tone uses a hammer-like attack and decaying string harmonics:
+**Chiptune** is the default startup sound. The Piano tone uses a hammer-like
+attack and decaying string harmonics:
 bright overtones fade quickly, leaving a quieter fundamental and string tail.
-The **Filter** button cycles Piano, Warm keys, Bell, and Soft synth. Soft synth
+The **Filter** button cycles Piano, Warm keys, Bell, Soft synth, and Chiptune. Soft synth
 uses rounded, detuned saw waves with a softer attack and longer release; it stays
-full while a key is held. These sounds are synthesized rather than sampled.
+full while a key is held. Chiptune uses a bright square/pulse wave with a short
+attack decay for a classic game-console lead. Its harmonics are limited at high
+pitches to reduce aliasing. These sounds are synthesized rather than sampled.
 Switching presets preserves held notes and crossfades briefly.
 
 The pitch bars show synthesizer voice gate levels on a fixed C1–C8 axis, not an

@@ -96,7 +96,8 @@ static void test_tones(void) {
     }
     Synth synth;
     synth_init(&synth);
-    assert(synth.tone == TONE_PIANO);
+    assert(synth.tone == TONE_CHIPTUNE);
+    synth_set_tone(&synth, TONE_PIANO);
     synth_notes(&synth, held, false);
     synth_render(&synth, samples, 4410);
     double attack_energy = energy(samples, 4410);
@@ -158,6 +159,27 @@ static void test_piano_and_synth_character(void) {
     }
 }
 
+static void test_chiptune(void) {
+    Synth synth;
+    synth_init(&synth);
+    synth_set_tone(&synth, TONE_CHIPTUNE);
+    assert(strcmp(tone_name(synth.tone), "Chiptune") == 0);
+    bool held[MIDI_NOTES] = {false};
+    held[57] = true;
+    synth_notes(&synth, held, false);
+    float samples[4410];
+    // Let the preset crossfade and attack settle before measuring a held note.
+    for (int i = 0; i < 10; ++i)
+        synth_render(&synth, samples, 4410);
+    double harmonics = harmonic_ratio(samples, 4410, 220);
+    assert(harmonics > .07 && harmonics < .15); // Square-wave third harmonic.
+    assert(energy(samples, 4410) > .001);       // A held chip note keeps sounding.
+    held[57] = false;
+    synth_notes(&synth, held, false);
+    synth_render(&synth, samples, 4410);
+    assert(fabsf(samples[4409]) < .001f);
+}
+
 int main(void) {
     char name[8];
     assert(fabs(note_frequency(69) - 440) < .00001);
@@ -170,6 +192,7 @@ int main(void) {
     test_sound();
     test_tones();
     test_piano_and_synth_character();
+    test_chiptune();
     puts("All pitch, keyboard, tone, polyphony, sustain, release, and silence tests "
          "passed.");
     return 0;

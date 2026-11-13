@@ -50,7 +50,7 @@ int keyboard_hit(float x, float y, KeyRect bounds) {
 }
 
 const char *tone_name(Tone tone) {
-    static const char *names[TONE_COUNT] = {"Piano", "Warm keys", "Bell", "Soft synth"};
+    static const char *names[TONE_COUNT] = {"Piano", "Warm keys", "Bell", "Soft synth", "Chiptune"};
     return tone >= 0 && tone < TONE_COUNT ? names[tone] : "Unknown";
 }
 
@@ -65,6 +65,8 @@ void synth_set_tone(Synth *synth, Tone tone) {
 void synth_init(Synth *synth) {
     memset(synth, 0, sizeof(*synth));
     synth->volume = 0.65f;
+    synth->tone = TONE_CHIPTUNE;
+    synth->previous_tone = TONE_CHIPTUNE;
     synth->tone_mix = 1;
 }
 
@@ -127,6 +129,17 @@ static double voice(Tone tone, double phase, double age, double frequency) {
             sample += weight * .5 * (sin(phase * harmonic + drift) + sin(phase * harmonic - drift));
         }
         return sample * .85 * (1 - exp(-age * 35));
+    }
+    case TONE_CHIPTUNE: {
+        // A classic 50% pulse wave. Sum only odd harmonics below Nyquist instead
+        // of switching samples abruptly, which would alias at high pitches.
+        double pulse = 0;
+        for (int harmonic = 1; harmonic <= 31; harmonic += 2) {
+            if (frequency * harmonic >= SAMPLE_RATE * .45)
+                break;
+            pulse += sin(phase * harmonic) / harmonic;
+        }
+        return pulse * (4.0 / (TAU / 2)) * .8 * (.65 + .35 * exp(-age * 16));
     }
     default:
         return 0;
