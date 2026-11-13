@@ -1,37 +1,30 @@
 # alt-synth
 
-A small polyphonic desktop synthesizer written in C with Raylib. Play a piano from
-your computer keyboard or mouse. Held notes light up on screen; the waveform shows
-the audio output and the pitch display shows active voices.
+A polyphonic desktop synth in C and Raylib. Play from your keyboard or mouse,
+with piano and QWERTY displays, a waveform, and active-note levels.
 
 ## Build and run
 
-Requires a C11 compiler, `pkg-config`, and Raylib 5.5 or later with its development
-headers. No Make or Go toolchain is used.
+Requires a C11 compiler, `pkg-config`, and Raylib 5.5+ development files.
 
 ```sh
 ./build.sh
 ./bin/alt-synth
 ```
 
-The font is embedded in the executable, so you can launch it from any directory.
-Raylib provides windowing and audio; its native libraries must be available at
-runtime if you link it dynamically. The app can still display the keyboard when
-an audio device is unavailable.
+The font is embedded. No Go or Make is needed. `build.sh` finds Raylib through
+`pkg-config` or `.deps/raylib`; custom installations can set `PKG_CONFIG_PATH`
+or both `RAYLIB_CFLAGS` and `RAYLIB_LIBS`.
 
-If Raylib is not installed, install your distribution's Raylib development
-package, or build it once from the official source with CMake and Ninja. On
-Debian/Ubuntu, the source build needs these packages:
+<details>
+<summary>Build Raylib locally if it is not installed</summary>
+
+On Debian/Ubuntu, install the native dependencies, then download and build the
+Raylib source with Ninja. Run these commands from the alt-synth directory:
 
 ```sh
 sudo apt-get install build-essential pkg-config cmake ninja-build \
     libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev
-```
-
-From the alt-synth directory, the following commands download Raylib 5.5 and
-install a static library locally in `.deps/raylib` (ignored by Git):
-
-```sh
 git clone --depth 1 --branch 5.5 https://github.com/raysan5/raylib.git .deps/raylib-source
 cmake -S .deps/raylib-source -B .deps/raylib-build -G Ninja \
     -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF \
@@ -41,44 +34,30 @@ cmake --install .deps/raylib-build
 ./build.sh
 ```
 
-`build.sh` discovers this local installation automatically. For another location,
-set `PKG_CONFIG_PATH`, or supply both `RAYLIB_CFLAGS` and `RAYLIB_LIBS`.
-`CC`, `CPPFLAGS`, `CFLAGS`, and `LDFLAGS` are also supported.
+</details>
 
-## Playing
+## Controls
 
-| Controls | Action |
+| Control | Action |
 | --- | --- |
-| `A S D F G H J K L ; '` | White keys, from C through the following F |
-| `W E T Y U O P` | Black keys in the row above their white-key gaps |
-| Filter button / `Tab` | Cycle piano, warm keys, bell, soft synth, and chiptune |
-| Left mouse button | Hold or drag across the piano to play |
-| `Space` | Hold the sustain pedal |
-| `←` / `→` | Shift the keyboard down / up an octave |
-| `-` / `=` | Decrease / increase volume |
-| `Backspace` | Silence all notes |
-| `F1` | Open / close help |
+| `A S D F G H J K L ; '` | White notes |
+| `W E T Y U O P` | Black notes |
+| Mouse hold / drag | Play notes; QWERTY Space holds sustain |
+| `Space` | Hold sustain |
+| `←` / `→` | Shift octave |
+| `-` / `=` | Adjust volume |
+| Filter button / `Tab` | Cycle sounds |
+| View button / `F2` | Switch piano / QWERTY display |
+| `Backspace` | Silence notes |
+| `F1` | Toggle help |
 | `Esc` | Close help, or quit |
 
-The initial range is C4–F5, starting at middle C, with all 11 white keys on the
-home row. Play several keys together for chords. Amber keys are held; green keys are sustained. Releasing Space releases sustained notes.
-Changing octave clears previous notes. Opening help or leaving the window silences
-notes; release the playing controls before starting again. Computer keyboards may
-limit how many simultaneous key presses they can report.
-
-**Chiptune** is the default startup sound. The Piano tone uses a hammer-like
-attack and decaying string harmonics:
-bright overtones fade quickly, leaving a quieter fundamental and string tail.
-The **Filter** button cycles Piano, Warm keys, Bell, Soft synth, and Chiptune. Soft synth
-uses rounded, detuned saw waves with a softer attack and longer release; it stays
-full while a key is held. Chiptune uses a bright square/pulse wave with a short
-attack decay for a classic game-console lead. Its harmonics are limited at high
-pitches to reduce aliasing. These sounds are synthesized rather than sampled.
-Switching presets preserves held notes and crossfades briefly.
-
-The pitch bars show synthesizer voice gate levels on a fixed C1–C8 axis, not an
-FFT or input from a microphone. The keyboard uses MIDI note numbers internally; external
-MIDI devices are not connected yet.
+Starts at **C4–F5** (middle C) with **Chiptune** selected. Other sounds are Piano,
+Warm keys, Bell, and Soft synth. Sounds are synthesized; no samples are required.
+Amber keys are held; green keys are sustained. Both displays use the same bindings.
+Opening help or leaving the window silences notes; release playing controls before
+resuming. Keyboard hardware may limit simultaneous presses. External MIDI input
+is not implemented.
 
 ## Development
 
@@ -88,15 +67,9 @@ CFLAGS='-O1 -g -fsanitize=address,undefined' ./test.sh
 CFLAGS='-O0 -g' ./build.sh
 ```
 
-Tests cover note frequencies, keyboard geometry and hit detection, polyphonic
-output, sound presets, piano overtone decay and re-strikes, sustained synth
-harmonics, sustain, release envelopes, and silence. They run without Raylib or a
-display. Check the window, held-key highlighting, and audio manually after a UI
-change. Remove `bin/` to clean app build output; keep `.deps/` to retain Raylib.
+Core tests run without Raylib or a display. Check UI and audio changes manually.
+Compiler overrides: `CC`, `CPPFLAGS`, `CFLAGS`, `LDFLAGS`. Delete `bin/` to clean
+app output; `.deps/` keeps the local Raylib build.
 
-`src/main.c` handles the Raylib interface and input. `src/synth.c` contains note
-math, keyboard geometry, and synthesis, independent of the display and audio device.
-
-The bundled Space Mono Bold font uses the
-[SIL Open Font License](assets/OFL.txt). [Raylib](https://www.raylib.com/) uses the
-zlib/libpng license.
+[Raylib](https://www.raylib.com/) uses the zlib/libpng license.
+The bundled Space Mono Bold font uses the [SIL Open Font License](assets/OFL.txt).

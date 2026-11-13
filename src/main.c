@@ -74,6 +74,137 @@ static void draw_keyboard(KeyRect bounds, int base, const bool held[MIDI_NOTES],
     }
 }
 
+typedef struct {
+    int code;
+    const char *label;
+    float units;
+} ComputerKey;
+
+// Standard ANSI QWERTY, including row stagger and full-width modifier keys.
+static const ComputerKey computer_rows[5][15] = {{{KEY_GRAVE, "`", 1},
+                                                  {KEY_ONE, "1", 1},
+                                                  {KEY_TWO, "2", 1},
+                                                  {KEY_THREE, "3", 1},
+                                                  {KEY_FOUR, "4", 1},
+                                                  {KEY_FIVE, "5", 1},
+                                                  {KEY_SIX, "6", 1},
+                                                  {KEY_SEVEN, "7", 1},
+                                                  {KEY_EIGHT, "8", 1},
+                                                  {KEY_NINE, "9", 1},
+                                                  {KEY_ZERO, "0", 1},
+                                                  {KEY_MINUS, "-", 1},
+                                                  {KEY_EQUAL, "=", 1},
+                                                  {KEY_BACKSPACE, "Back", 2}},
+                                                 {{KEY_TAB, "Tab", 1.5},
+                                                  {KEY_Q, "Q", 1},
+                                                  {KEY_W, "W", 1},
+                                                  {KEY_E, "E", 1},
+                                                  {KEY_R, "R", 1},
+                                                  {KEY_T, "T", 1},
+                                                  {KEY_Y, "Y", 1},
+                                                  {KEY_U, "U", 1},
+                                                  {KEY_I, "I", 1},
+                                                  {KEY_O, "O", 1},
+                                                  {KEY_P, "P", 1},
+                                                  {KEY_LEFT_BRACKET, "[", 1},
+                                                  {KEY_RIGHT_BRACKET, "]", 1},
+                                                  {KEY_BACKSLASH, "\\", 1.5}},
+                                                 {{KEY_CAPS_LOCK, "Caps", 1.75},
+                                                  {KEY_A, "A", 1},
+                                                  {KEY_S, "S", 1},
+                                                  {KEY_D, "D", 1},
+                                                  {KEY_F, "F", 1},
+                                                  {KEY_G, "G", 1},
+                                                  {KEY_H, "H", 1},
+                                                  {KEY_J, "J", 1},
+                                                  {KEY_K, "K", 1},
+                                                  {KEY_L, "L", 1},
+                                                  {KEY_SEMICOLON, ";", 1},
+                                                  {KEY_APOSTROPHE, "'", 1},
+                                                  {KEY_ENTER, "Enter", 2.25}},
+                                                 {{KEY_LEFT_SHIFT, "Shift", 2.25},
+                                                  {KEY_Z, "Z", 1},
+                                                  {KEY_X, "X", 1},
+                                                  {KEY_C, "C", 1},
+                                                  {KEY_V, "V", 1},
+                                                  {KEY_B, "B", 1},
+                                                  {KEY_N, "N", 1},
+                                                  {KEY_M, "M", 1},
+                                                  {KEY_COMMA, ",", 1},
+                                                  {KEY_PERIOD, ".", 1},
+                                                  {KEY_SLASH, "/", 1},
+                                                  {KEY_RIGHT_SHIFT, "Shift", 2.75}},
+                                                 {{KEY_LEFT_CONTROL, "Ctrl", 1.25},
+                                                  {KEY_LEFT_SUPER, "Win", 1.25},
+                                                  {KEY_LEFT_ALT, "Alt", 1.25},
+                                                  {KEY_SPACE, "Space / sustain", 6.25},
+                                                  {KEY_RIGHT_ALT, "Alt", 1.25},
+                                                  {KEY_RIGHT_SUPER, "Win", 1.25},
+                                                  {KEY_KB_MENU, "Menu", 1.25},
+                                                  {KEY_RIGHT_CONTROL, "Ctrl", 1.25}}};
+
+static int binding_index(int code) {
+    for (int i = 0; i < KEY_COUNT; ++i)
+        if (bindings[i] == code)
+            return i;
+    return -1;
+}
+
+static Rectangle computer_key_rect(KeyRect bounds, int row, float offset, float units) {
+    float unit = bounds.width / 15;
+    float row_height = bounds.height / 5;
+    return (Rectangle){bounds.x + offset * unit + 2, bounds.y + row * row_height + 2,
+                       units * unit - 4, row_height - 4};
+}
+
+static int computer_hit(Vector2 mouse, KeyRect bounds) {
+    for (int row = 0; row < 5; ++row) {
+        float offset = 0;
+        for (int i = 0; i < 15 && computer_rows[row][i].label; ++i) {
+            ComputerKey key = computer_rows[row][i];
+            Rectangle r = computer_key_rect(bounds, row, offset, key.units);
+            if (CheckCollisionPointRec(mouse, r))
+                return key.code;
+            offset += key.units;
+        }
+    }
+    return KEY_NULL;
+}
+
+static void draw_computer_keyboard(KeyRect bounds, int base, const bool held[MIDI_NOTES],
+                                   const Synth *synth, bool sustain) {
+    for (int row = 0; row < 5; ++row) {
+        float offset = 0;
+        for (int i = 0; i < 15 && computer_rows[row][i].label; ++i) {
+            ComputerKey key = computer_rows[row][i];
+            Rectangle r = computer_key_rect(bounds, row, offset, key.units);
+            offset += key.units;
+            int index = binding_index(key.code);
+            bool pressed = index >= 0 ? held[base + index] : key.code == KEY_SPACE && sustain;
+            bool latched = index >= 0 && synth->sounding[base + index];
+            Color fill = background, ink = muted;
+            if (index >= 0) {
+                fill = note_is_black(index) ? background : border;
+                ink = text_color;
+            }
+            if (pressed || latched) {
+                fill = pressed ? accent : signal_color;
+                ink = background;
+            }
+            DrawRectangleRounded(r, .12f, 6, fill);
+            DrawRectangleRoundedLinesEx(r, .12f, 6, 1, index >= 0 ? muted : border);
+            if (index >= 0) {
+                centered(key.label, (Rectangle){r.x, r.y, r.width, r.height * .55f}, 16, ink);
+                char name[8];
+                note_name(base + index, name, sizeof(name));
+                centered(name, (Rectangle){r.x, r.y + r.height * .55f, r.width, r.height * .45f},
+                         11, ink);
+            } else
+                centered(key.label, r, 14, ink);
+        }
+    }
+}
+
 static void draw_wave(Rectangle r, const float *samples) {
     panel(r, "OUTPUT / WAVEFORM");
     Rectangle plot = {r.x + 20, r.y + 52, r.width - 40, r.height - 80};
@@ -164,7 +295,7 @@ static void draw_help(int width, int height) {
     help_row(right, box.y + 358, "F1", "Toggle help");
     help_row(right, box.y + 400, "Esc", "Close help");
 
-    text("Esc quits when help is closed.", left, box.y + 478, 14, muted);
+    text("F2 switches piano / QWERTY view. Esc quits outside help.", left, box.y + 478, 14, muted);
 }
 
 int main(int argc, char **argv) {
@@ -174,7 +305,7 @@ int main(int argc, char **argv) {
                  "White keys: A S D F G H J K L ; '\n"
                  "Black keys: W E T Y U O P\n"
                  "Space sustain | arrows octave | -/= volume | Backspace silence | "
-                 "Tab filter | F1 help | Esc quit");
+                 "Tab filter | F2 keyboard view | F1 help | Esc quit");
             return 0;
         }
         fprintf(stderr, "Usage: %s [--help]\n", argv[0]);
@@ -210,6 +341,7 @@ int main(int argc, char **argv) {
     }
     int base = 60; // C4 (middle C).
     bool help = false, quit = false, sustain = false, blocked = false;
+    bool computer_view = false;
     while (!quit && !WindowShouldClose()) {
         int width = GetScreenWidth(), height = GetScreenHeight();
         float margin = 24, gap = 16;
@@ -220,6 +352,7 @@ int main(int argc, char **argv) {
         float graph_y = 128, graph_height = keyboard_panel.y - graph_y - gap;
         float graph_width = (width - 2 * margin - gap) / 2;
         Rectangle filter_button = {width - 360, 73, 336, 42};
+        Rectangle view_button = {width - 298, keyboard_panel.y + 8, 250, 38};
         bool held[MIDI_NOTES] = {false};
         if (IsKeyPressed(KEY_F1))
             help = !help;
@@ -231,6 +364,9 @@ int main(int argc, char **argv) {
         }
         bool focused = IsWindowFocused() && !IsWindowMinimized() && !help;
         if (focused) {
+            if (IsKeyPressed(KEY_F2) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+                                         CheckCollisionPointRec(GetMousePosition(), view_button)))
+                computer_view = !computer_view;
             bool filter_click = IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
                                 CheckCollisionPointRec(GetMousePosition(), filter_button);
             if (filter_click || IsKeyPressed(KEY_TAB))
@@ -248,13 +384,17 @@ int main(int argc, char **argv) {
                 synth.volume = fminf(1, synth.volume + .05f);
             for (int i = 0; i < KEY_COUNT; ++i)
                 held[base + i] = IsKeyDown(bindings[i]);
+            sustain = IsKeyDown(KEY_SPACE);
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                 Vector2 mouse = GetMousePosition();
-                int key = keyboard_hit(mouse.x, mouse.y, keys);
-                if (key >= 0)
-                    held[base + key] = true;
+                int key = computer_view ? computer_hit(mouse, keys) : KEY_NULL;
+                int index =
+                    computer_view ? binding_index(key) : keyboard_hit(mouse.x, mouse.y, keys);
+                if (index >= 0)
+                    held[base + index] = true;
+                if (key == KEY_SPACE)
+                    sustain = true;
             }
-            sustain = IsKeyDown(KEY_SPACE);
         } else {
             blocked = true;
             synth_silence(&synth);
@@ -308,7 +448,14 @@ int main(int argc, char **argv) {
         draw_pitches((Rectangle){margin + graph_width + gap, graph_y, graph_width, graph_height},
                      &synth);
         panel(keyboard_panel, "HOLD KEYS TO PLAY / SPACE TO SUSTAIN");
-        draw_keyboard(keys, base, held, &synth);
+        bool view_hover = !help && CheckCollisionPointRec(GetMousePosition(), view_button);
+        DrawRectangleRounded(view_button, .15f, 6, view_hover ? border : background);
+        DrawRectangleRoundedLinesEx(view_button, .15f, 6, 1, muted);
+        centered(computer_view ? "F2: QWERTY VIEW" : "F2: PIANO VIEW", view_button, 16, text_color);
+        if (computer_view)
+            draw_computer_keyboard(keys, base, held, &synth, sustain);
+        else
+            draw_keyboard(keys, base, held, &synth);
         text("ARROWS octave   -/= volume   BACKSPACE silence   ESC quit", margin, height - 29, 18,
              muted);
         if (help)
