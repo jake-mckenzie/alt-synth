@@ -8,12 +8,17 @@
 
 #define AUDIO_FRAMES 1024
 
-// White keys follow the home row; black keys use the row above their gaps.
-static const int bindings[KEY_COUNT] = {KEY_A, KEY_W, KEY_S, KEY_E, KEY_D,         KEY_F,
-                                        KEY_T, KEY_G, KEY_Y, KEY_H, KEY_U,         KEY_J,
-                                        KEY_K, KEY_O, KEY_L, KEY_P, KEY_SEMICOLON, KEY_APOSTROPHE};
-static const char *labels[KEY_COUNT] = {"A", "W", "S", "E", "D", "F", "T", "G", "Y",
-                                        "H", "U", "J", "K", "O", "L", "P", ";", "'"};
+// Keep each note's physical key and display label together for every keyboard view.
+typedef struct {
+    int code;
+    const char *label;
+} NoteBinding;
+
+static const NoteBinding bindings[KEY_COUNT] = {
+    {KEY_A, "A"}, {KEY_W, "W"},         {KEY_S, "S"},         {KEY_E, "E"}, {KEY_D, "D"},
+    {KEY_F, "F"}, {KEY_T, "T"},         {KEY_G, "G"},         {KEY_Y, "Y"}, {KEY_H, "H"},
+    {KEY_U, "U"}, {KEY_J, "J"},         {KEY_K, "K"},         {KEY_O, "O"}, {KEY_L, "L"},
+    {KEY_P, "P"}, {KEY_SEMICOLON, ";"}, {KEY_APOSTROPHE, "'"}};
 #define TEXT_SCALE 1.3f
 static const Color background = {17, 19, 23, 255};
 static const Color panel_color = {25, 28, 33, 255};
@@ -24,21 +29,38 @@ static const Color accent = {255, 182, 77, 255};
 static const Color signal_color = {120, 218, 191, 255};
 static Font font;
 
+// Draw a UI label with the shared font size scale and character spacing.
 static void text(const char *label, float x, float y, float size, Color color) {
     DrawTextEx(font, label, (Vector2){x, y}, size * TEXT_SCALE, 1, color);
 }
+
+// Center text using the same measured font metrics as the label renderer.
 static void centered(const char *label, Rectangle bounds, float size, Color color) {
     Vector2 extent = MeasureTextEx(font, label, size * TEXT_SCALE, 1);
     text(label, bounds.x + (bounds.width - extent.x) / 2, bounds.y + (bounds.height - extent.y) / 2,
          size, color);
 }
+
+// Draw a dashboard panel and its section heading.
 static void panel(Rectangle r, const char *title) {
     DrawRectangleRounded(r, 0.035f, 8, panel_color);
     DrawRectangleRoundedLinesEx(r, 0.035f, 8, 1, border);
     text(title, r.x + 20, r.y + 15, 18, muted);
 }
+
+// Draw a rounded action button with a hover state when interaction is enabled.
+static void draw_button(Rectangle bounds, const char *label, float size, bool primary,
+                        bool enabled) {
+    bool hover = enabled && CheckCollisionPointRec(GetMousePosition(), bounds);
+    DrawRectangleRounded(bounds, .15f, 6, hover ? border : (primary ? panel_color : background));
+    DrawRectangleRoundedLinesEx(bounds, .15f, 6, 1, primary ? accent : muted);
+    centered(label, bounds, size, primary ? accent : text_color);
+}
+
+// Convert display-independent keyboard bounds to a Raylib rectangle.
 static Rectangle rectangle(KeyRect r) { return (Rectangle){r.x, r.y, r.width, r.height}; }
 
+// Draw the piano with note labels and held or sustained key highlights.
 static void draw_keyboard(KeyRect bounds, int base, const bool held[MIDI_NOTES],
                           const Synth *synth) {
     for (int pass = 0; pass < 2; ++pass) {
@@ -63,7 +85,8 @@ static void draw_keyboard(KeyRect bounds, int base, const bool held[MIDI_NOTES],
                 DrawRectangle((int)(r.x + 4), (int)(r.y + 4), (int)(r.width - 8), 3,
                               Fade(WHITE, .12f));
             }
-            centered(labels[i], (Rectangle){r.x, r.y + r.height - 64, r.width, 26}, 20, ink);
+            centered(bindings[i].label, (Rectangle){r.x, r.y + r.height - 64, r.width, 26}, 20,
+                     ink);
             char name[8];
             note_name(note, name, sizeof(name));
             centered(name, (Rectangle){r.x, r.y + r.height - 33, r.width, 22}, 14, Fade(ink, .7f));
@@ -143,13 +166,15 @@ static const ComputerKey computer_rows[5][15] = {{{KEY_GRAVE, "`", 1},
                                                   {KEY_KB_MENU, "Menu", 1.25},
                                                   {KEY_RIGHT_CONTROL, "Ctrl", 1.25}}};
 
+// Find the chromatic note offset assigned to a physical key, or -1 if unbound.
 static int binding_index(int code) {
     for (int i = 0; i < KEY_COUNT; ++i)
-        if (bindings[i] == code)
+        if (bindings[i].code == code)
             return i;
     return -1;
 }
 
+// Convert a staggered QWERTY key width and row into screen bounds.
 static Rectangle computer_key_rect(KeyRect bounds, int row, float offset, float units) {
     float unit = bounds.width / 15;
     float row_height = bounds.height / 5;
@@ -157,6 +182,7 @@ static Rectangle computer_key_rect(KeyRect bounds, int row, float offset, float 
                        units * unit - 4, row_height - 4};
 }
 
+// Return the physical key under the mouse, or KEY_NULL outside keycaps.
 static int computer_hit(Vector2 mouse, KeyRect bounds) {
     for (int row = 0; row < 5; ++row) {
         float offset = 0;
@@ -171,6 +197,7 @@ static int computer_hit(Vector2 mouse, KeyRect bounds) {
     return KEY_NULL;
 }
 
+// Draw the QWERTY layout with playable notes and sustain feedback.
 static void draw_computer_keyboard(KeyRect bounds, int base, const bool held[MIDI_NOTES],
                                    const Synth *synth, bool sustain) {
     for (int row = 0; row < 5; ++row) {
@@ -205,6 +232,7 @@ static void draw_computer_keyboard(KeyRect bounds, int base, const bool held[MID
     }
 }
 
+// Plot the most recent audio buffer against its sample-derived time window.
 static void draw_wave(Rectangle r, const float *samples) {
     panel(r, "OUTPUT / WAVEFORM");
     Rectangle plot = {r.x + 20, r.y + 52, r.width - 40, r.height - 80};
@@ -223,6 +251,7 @@ static void draw_wave(Rectangle r, const float *samples) {
     text("23.2 ms", plot.x + plot.width - 100, r.y + r.height - 24, 13, muted);
 }
 
+// Display voice gate envelopes on a fixed MIDI pitch axis; this is not an FFT.
 static void draw_pitches(Rectangle r, const Synth *synth) {
     panel(r, "VOICES / PITCH LEVELS");
     Rectangle plot = {r.x + 24, r.y + 52, r.width - 48, r.height - 80};
@@ -246,11 +275,13 @@ static void draw_pitches(Rectangle r, const Synth *synth) {
     }
 }
 
+// Draw one aligned control binding and its action in the help overlay.
 static void help_row(float x, float y, const char *keys, const char *action) {
     text(keys, x, y, 16, accent);
     text(action, x + 150, y, 16, text_color);
 }
 
+// Draw the key mapping and grouped controls over a dimmed application view.
 static void draw_help(int width, int height) {
     DrawRectangle(0, 0, width, height, Fade(BLACK, .75f));
     float box_width = fminf(width - 64, 1080);
@@ -278,7 +309,7 @@ static void draw_help(int width, int height) {
         Rectangle cap = {x, y, cap_width, 38};
         DrawRectangleRounded(cap, .15f, 6, black ? background : border);
         DrawRectangleRoundedLinesEx(cap, .15f, 6, 1, black ? border : muted);
-        centered(labels[i], cap, 17, black ? accent : text_color);
+        centered(bindings[i].label, cap, 17, black ? accent : text_color);
     }
 
     float divider_y = box.y + 210;
@@ -298,13 +329,19 @@ static void draw_help(int width, int height) {
     text("F2 switches piano / QWERTY view. Esc quits outside help.", left, box.y + 478, 14, muted);
 }
 
+// Print command-line help or manage the window, input, audio stream, and rendering loop.
 int main(int argc, char **argv) {
     if (argc > 1) {
         if (strcmp(argv[1], "--help") == 0) {
-            puts("alt-synth: a polyphonic piano keyboard\n"
-                 "White keys: A S D F G H J K L ; '\n"
-                 "Black keys: W E T Y U O P\n"
-                 "Space sustain | arrows octave | -/= volume | Backspace silence | "
+            puts("alt-synth: a polyphonic piano keyboard");
+            for (int black = 0; black <= 1; ++black) {
+                printf("%s keys:", black ? "Black" : "White");
+                for (int i = 0; i < KEY_COUNT; ++i)
+                    if (note_is_black(i) == (bool)black)
+                        printf(" %s", bindings[i].label);
+                putchar('\n');
+            }
+            puts("Space sustain | arrows octave | -/= volume | Backspace silence | "
                  "Tab filter | F2 keyboard view | F1 help | Esc quit");
             return 0;
         }
@@ -383,7 +420,7 @@ int main(int argc, char **argv) {
             if (IsKeyPressed(KEY_EQUAL))
                 synth.volume = fminf(1, synth.volume + .05f);
             for (int i = 0; i < KEY_COUNT; ++i)
-                held[base + i] = IsKeyDown(bindings[i]);
+                held[base + i] = IsKeyDown(bindings[i].code);
             sustain = IsKeyDown(KEY_SPACE);
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                 Vector2 mouse = GetMousePosition();
@@ -409,7 +446,7 @@ int main(int argc, char **argv) {
         if (blocked) {
             bool any = IsKeyDown(KEY_SPACE) || IsMouseButtonDown(MOUSE_BUTTON_LEFT);
             for (int i = 0; i < KEY_COUNT; ++i)
-                any = any || IsKeyDown(bindings[i]);
+                any = any || IsKeyDown(bindings[i].code);
             if (!any)
                 blocked = false;
             memset(held, 0, sizeof(held));
@@ -438,20 +475,15 @@ int main(int argc, char **argv) {
             text("AUDIO UNAVAILABLE", width - 345, 32, 20, accent);
         else
             text("F1 HELP", width - 155, 32, 20, muted);
-        bool filter_hover = CheckCollisionPointRec(GetMousePosition(), filter_button) && !help;
-        DrawRectangleRounded(filter_button, .15f, 8, filter_hover ? border : panel_color);
-        DrawRectangleRoundedLinesEx(filter_button, .15f, 8, 1, accent);
         char filter_label[64];
         snprintf(filter_label, sizeof(filter_label), "FILTER: %s", tone_name(synth.tone));
-        centered(filter_label, filter_button, 20, accent);
+        draw_button(filter_button, filter_label, 20, true, !help);
         draw_wave((Rectangle){margin, graph_y, graph_width, graph_height}, samples);
         draw_pitches((Rectangle){margin + graph_width + gap, graph_y, graph_width, graph_height},
                      &synth);
         panel(keyboard_panel, "HOLD KEYS TO PLAY / SPACE TO SUSTAIN");
-        bool view_hover = !help && CheckCollisionPointRec(GetMousePosition(), view_button);
-        DrawRectangleRounded(view_button, .15f, 6, view_hover ? border : background);
-        DrawRectangleRoundedLinesEx(view_button, .15f, 6, 1, muted);
-        centered(computer_view ? "F2: QWERTY VIEW" : "F2: PIANO VIEW", view_button, 16, text_color);
+        draw_button(view_button, computer_view ? "F2: QWERTY VIEW" : "F2: PIANO VIEW", 16, false,
+                    !help);
         if (computer_view)
             draw_computer_keyboard(keys, base, held, &synth, sustain);
         else

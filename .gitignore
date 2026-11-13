@@ -13,3 +13,14 @@
 
 # Temporary files
 *~
+*.o
+*.a
+*.profraw
+*.profdata
+
+# Local credentials (examples may be committed)
+.env
+.env.*
+!.env.example
+*.pem
+*.key

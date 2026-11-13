@@ -6,8 +6,10 @@
 
 #define TAU 6.28318530717958647692
 
+// Convert a MIDI note number to equal-tempered frequency with A4 at 440 Hz.
 double note_frequency(int midi) { return 440.0 * pow(2.0, (midi - 69) / 12.0); }
 
+// Write a sharp-spelled note and octave, or -- for an invalid MIDI note.
 void note_name(int midi, char *text, size_t size) {
     static const char *names[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     if (midi < 0 || midi >= MIDI_NOTES) {
@@ -17,11 +19,13 @@ void note_name(int midi, char *text, size_t size) {
     snprintf(text, size, "%s%d", names[midi % 12], midi / 12 - 1);
 }
 
+// Report whether a MIDI pitch class is a black piano key.
 bool note_is_black(int midi) {
     int pitch = midi % 12;
     return pitch == 1 || pitch == 3 || pitch == 6 || pitch == 8 || pitch == 10;
 }
 
+// Lay out a chromatic key within a C-to-F piano range; indices must be valid.
 KeyRect keyboard_rect(int index, KeyRect bounds) {
     float white_width = bounds.width / WHITE_KEY_COUNT;
     int whites = 0;
@@ -35,6 +39,7 @@ KeyRect keyboard_rect(int index, KeyRect bounds) {
     return (KeyRect){bounds.x + whites * white_width, bounds.y, white_width, bounds.height};
 }
 
+// Return the piano key under a point, prioritizing overlapping black keys.
 int keyboard_hit(float x, float y, KeyRect bounds) {
     // Black keys overlap white keys, so they take precedence for mouse input.
     for (int pass = 0; pass < 2; ++pass) {
@@ -49,11 +54,13 @@ int keyboard_hit(float x, float y, KeyRect bounds) {
     return -1;
 }
 
+// Return the filter label for a valid tone, or Unknown for an invalid value.
 const char *tone_name(Tone tone) {
     static const char *names[TONE_COUNT] = {"Piano", "Warm keys", "Bell", "Soft synth", "Chiptune"};
     return tone >= 0 && tone < TONE_COUNT ? names[tone] : "Unknown";
 }
 
+// Start a short crossfade to a different valid tone without releasing notes.
 void synth_set_tone(Synth *synth, Tone tone) {
     if (tone < 0 || tone >= TONE_COUNT || tone == synth->tone)
         return;
@@ -62,6 +69,7 @@ void synth_set_tone(Synth *synth, Tone tone) {
     synth->tone_mix = 0;
 }
 
+// Initialize a silent synth with the default Chiptune tone and volume.
 void synth_init(Synth *synth) {
     memset(synth, 0, sizeof(*synth));
     synth->volume = 0.65f;
@@ -70,6 +78,7 @@ void synth_init(Synth *synth) {
     synth->tone_mix = 1;
 }
 
+// Apply held notes and pedal state, restarting the attack on each new press.
 void synth_notes(Synth *synth, const bool held[MIDI_NOTES], bool sustain) {
     for (int i = 0; i < MIDI_NOTES; ++i) {
         // Re-strike the string even if the sustain pedal still holds this note.
@@ -80,6 +89,7 @@ void synth_notes(Synth *synth, const bool held[MIDI_NOTES], bool sustain) {
     }
 }
 
+// Immediately clear voice gates and levels while retaining tone and volume.
 void synth_silence(Synth *synth) {
     memset(synth->sounding, 0, sizeof(synth->sounding));
     memset(synth->level, 0, sizeof(synth->level));
@@ -92,10 +102,9 @@ static double partial(double phase, double frequency, double ratio) {
     return frequency * ratio < SAMPLE_RATE * .45 ? sin(phase * ratio) : 0;
 }
 
+// Evaluate one preset oscillator and its age-dependent timbre at the given phase.
 static double voice(Tone tone, double phase, double age, double frequency) {
     double fundamental = sin(phase);
-    double decay = exp(-age * 1.6);
-    double attack = exp(-age * 5.0);
     switch (tone) {
     case TONE_PIANO: {
         // A hammer excites a broad harmonic spectrum; upper partials die first.
@@ -111,21 +120,24 @@ static double voice(Tone tone, double phase, double age, double frequency) {
             .08 * (partial(phase, frequency, 8) + partial(phase, frequency, 9)) * exp(-age * 90);
         return sample * body + hammer;
     }
-    case TONE_WARM:
+    case TONE_WARM: {
+        double decay = exp(-age * 1.6);
         return (.9 * fundamental + .1 * decay * partial(phase, frequency, 2)) * (.4 + .6 * decay);
+    }
     case TONE_BELL:
         return (.65 * fundamental + .35 * partial(phase, frequency, 3) * exp(-age * 2) +
-                .18 * partial(phase, frequency, 7) * attack) *
+                .18 * partial(phase, frequency, 7) * exp(-age * 5.0)) *
                exp(-age * 1.1);
     case TONE_SOFT: {
         // Rounded saw waves, with opposite detuning for slow beating on held notes.
-        double sample = 0;
+        double sample = 0, rolloff = 1;
         for (int harmonic = 1; harmonic <= 10; ++harmonic) {
             double detune = .0025;
             if (frequency * harmonic * (1 + detune) >= SAMPLE_RATE * .45)
                 break;
             double drift = TAU * age * frequency * harmonic * detune;
-            double weight = pow(.78, harmonic - 1) / harmonic;
+            double weight = rolloff / harmonic;
+            rolloff *= .78;
             sample += weight * .5 * (sin(phase * harmonic + drift) + sin(phase * harmonic - drift));
         }
         return sample * .85 * (1 - exp(-age * 35));
@@ -146,6 +158,7 @@ static double voice(Tone tone, double phase, double age, double frequency) {
     }
 }
 
+// Fill mono float samples and advance voice phases, envelopes, and preset crossfade.
 void synth_render(Synth *synth, float *buffer, size_t frames) {
     memset(buffer, 0, frames * sizeof(*buffer));
     float initial_mix = synth->tone_mix;

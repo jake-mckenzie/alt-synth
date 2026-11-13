@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
+// Check piano key hit detection, overlap priority, and boundary exclusions.
 static void test_keyboard(void) {
     KeyRect bounds = {20, 30, 900, 240};
     // Every key is selectable at its label area, including the last F.
@@ -19,6 +20,7 @@ static void test_keyboard(void) {
     assert(keyboard_hit(40, 270, bounds) == -1);
 }
 
+// Check initial silence, A4 pitch, sustain release, polyphonic bounds, and panic.
 static void test_sound(void) {
     Synth synth;
     synth_init(&synth);
@@ -58,6 +60,7 @@ static void test_sound(void) {
         assert(!synth.sounding[i]);
 }
 
+// Measure mean-square output energy for decay and silence assertions.
 static double energy(const float *samples, size_t count) {
     double total = 0;
     for (size_t i = 0; i < count; ++i)
@@ -65,6 +68,7 @@ static double energy(const float *samples, size_t count) {
     return total / count;
 }
 
+// Check preset differences, output bounds, piano re-strikes, and tone transitions.
 static void test_tones(void) {
     float samples[4410], piano[4410];
     bool held[MIDI_NOTES] = {false};
@@ -134,6 +138,7 @@ static double harmonic_ratio(const float *samples, size_t count, double frequenc
     return (powers[1] + powers[2] + powers[3]) / powers[0];
 }
 
+// Check that piano overtones decay while sustained synth harmonics remain.
 static void test_piano_and_synth_character(void) {
     double piano_tail = 0;
     for (int mode = 0; mode < 2; ++mode) {
@@ -159,6 +164,7 @@ static void test_piano_and_synth_character(void) {
     }
 }
 
+// Check the Chiptune label, square-wave harmonic content, sustain, and release.
 static void test_chiptune(void) {
     Synth synth;
     synth_init(&synth);
@@ -180,6 +186,7 @@ static void test_chiptune(void) {
     assert(fabsf(samples[4409]) < .001f);
 }
 
+// Run the display-independent pitch, keyboard, and synthesizer regression checks.
 int main(void) {
     char name[8];
     assert(fabs(note_frequency(69) - 440) < .00001);
