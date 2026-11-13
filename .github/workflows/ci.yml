@@ -2,8 +2,7 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
 permissions:
@@ -16,20 +15,36 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v6
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - name: Check out Raylib 5.5
+        uses: actions/checkout@v6
         with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
+          repository: raysan5/raylib
+          ref: '5.5'
+          path: .deps/raylib-source
 
-      - name: Install Raylib build dependencies
+      - name: Install native build dependencies
         run: >-
           sudo apt-get update && sudo apt-get install --yes
-          libgl1-mesa-dev libx11-dev libxkbcommon-dev libxcursor-dev
-          libxi-dev libxinerama-dev libxrandr-dev
+          build-essential pkg-config cmake ninja-build libgl1-mesa-dev
+          libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev
 
-      - name: Build release binary
-        run: make BUILD=release build
+      - name: Build native Raylib with Ninja
+        run: |
+          cmake -S .deps/raylib-source -B .deps/raylib-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_INSTALL_PREFIX="$PWD/.deps/raylib"
+          cmake --build .deps/raylib-build
+          cmake --install .deps/raylib-build
 
-      - name: Run quality checks
-        run: make check
+      - name: Test C core with sanitizers
+        run: ./test.sh
+        env:
+          CFLAGS: -O1 -g -fsanitize=address,undefined
+
+      - name: Build desktop app
+        run: ./build.sh
+        env:
+          CFLAGS: -O2 -Werror
+
+      - name: Check command-line help
+        run: ./bin/alt-synth --help

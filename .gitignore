@@ -1,5 +1,6 @@
 # Build output
 /bin/
+/.deps/
 
 # Operating-system metadata
 .DS_Store

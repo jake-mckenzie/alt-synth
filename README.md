@@ -1,69 +1,90 @@
 # alt-synth
 
-A desktop guitar chord viewer built with Go and Raylib. Browse voicings, play
-chords, and explore their notes with waveform and frequency spectrum views.
+A small polyphonic desktop synthesizer written in C with Raylib. Play a two-octave
+piano from your computer keyboard or mouse. Held notes light up on screen; the
+waveform shows the audio output and the pitch display shows each voice's envelope.
 
 ## Build and run
 
-Requires Go 1.25+, Make, and a C compiler with cgo enabled. The default Linux
-build uses X11 and needs OpenGL, X11, and xkbcommon development libraries.
-The Go module supplies Raylib's native source; a separate Raylib installation
-is not required.
+Requires a C11 compiler, `pkg-config`, and Raylib 5.5 or later with its development
+headers. No Make or Go toolchain is used.
 
 ```sh
-git clone git@github.com:jake-mckenzie/alt-synth.git
-cd alt-synth
-go mod download
-make run
+./build.sh
+./bin/alt-synth
 ```
 
-To launch an existing build, run `./bin/alt-synth`.
+The font is embedded in the executable, so you can launch it from any directory.
+Raylib provides windowing and audio; its native libraries must be available at
+runtime if you link it dynamically. The app can still display the keyboard when
+an audio device is unavailable.
 
-## Controls
+If Raylib is not installed, install your distribution's Raylib development
+package, or build it once from the official source with CMake and Ninja. On
+Debian/Ubuntu, the source build needs these packages:
 
-| Key | Action |
+```sh
+sudo apt-get install build-essential pkg-config cmake ninja-build \
+    libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev
+```
+
+From the alt-synth directory, the following commands download Raylib 5.5 and
+install a static library locally in `.deps/raylib` (ignored by Git):
+
+```sh
+git clone --depth 1 --branch 5.5 https://github.com/raysan5/raylib.git .deps/raylib-source
+cmake -S .deps/raylib-source -B .deps/raylib-build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF \
+    -DCMAKE_INSTALL_PREFIX="$PWD/.deps/raylib"
+cmake --build .deps/raylib-build
+cmake --install .deps/raylib-build
+./build.sh
+```
+
+`build.sh` discovers this local installation automatically. For another location,
+set `PKG_CONFIG_PATH`, or supply both `RAYLIB_CFLAGS` and `RAYLIB_LIBS`.
+`CC`, `CPPFLAGS`, `CFLAGS`, and `LDFLAGS` are also supported.
+
+## Playing
+
+| Controls | Action |
 | --- | --- |
-| `←` / `h`, `→` / `l` | Previous / next base chord |
-| `↑` / `k`, `↓` / `j` | Select an available accidental, major, or minor chord |
-| `1`–`9` (also numpad) | Select a voicing; unavailable numbers do nothing |
-| `a`–`g` | Hold to select and play a chord; release to stop |
-| `Space` / `p` | Play / stop |
-| `x` | Toggle compact / full-neck view |
-| `n` | Toggle finger numbers / fret numbers |
-| `t` | Cycle themes |
-| `F1` / `/` / `?` | Toggle help |
-| `Esc` | Close help, or quit when help is closed |
-| `q` | Quit |
+| `Z S X D C V G B H N J M` | Lower octave, chromatically from C to B |
+| `Q 2 W 3 E R 5 T 6 Y 7 U I` | Upper octave, from C through the next C |
+| Left mouse button | Hold or drag across the piano to play |
+| `Space` | Hold the sustain pedal |
+| `←` / `→` | Shift the keyboard down / up an octave |
+| `-` / `=` | Decrease / increase volume |
+| `Backspace` | Silence all notes |
+| `F1` | Open / close help |
+| `Esc` | Close help, or quit |
 
-Click the base-chord row or an available variant in the dial to select it.
-Changing chords retains the voicing number when available, otherwise selects
-voicing 1. The initial theme is CRT Amber; press `t` once for Neon Dark.
+The initial range is C3–C5. Play several keys together for chords. Amber keys are
+held; green keys are sustained. Releasing Space releases sustained notes.
+Changing octave clears previous notes. Opening help or leaving the window silences
+notes; release the playing controls before starting again. Computer keyboards may
+limit how many simultaneous key presses they can report.
 
-## Chords
-
-Three voicings each for **A, Am, B, Bb, C, Cm, D, Dm, E, Em, F, F#, G, and Gm**.
-
-Diagrams show high e at the top and low E at the bottom. `O` means open and `X`
-means muted. Fingers are numbered 1 (index) through 4 (little finger). Full-neck
-view covers frets 1–27; fret-number view uses the compact layout.
+The pitch bars show synthesizer voice levels on a fixed C1–C8 axis, not an FFT or
+input from a microphone. The keyboard uses MIDI note numbers internally; external
+MIDI devices are not connected yet.
 
 ## Development
 
-| Command | Purpose |
-| --- | --- |
-| `make build` | Build `bin/alt-synth` |
-| `make run` | Build and launch |
-| `make BUILD=release build` | Build a smaller release binary |
-| `make test` | Test catalog, navigation, and pitch calculations |
-| `make check` | Check formatting, run tests and race checks, and vet |
-| `make clean` | Remove build output |
+```sh
+./test.sh
+CFLAGS='-O1 -g -fsanitize=address,undefined' ./test.sh
+CFLAGS='-O0 -g' ./build.sh
+```
 
-`make check` includes the Raylib UI tests and requires the same native libraries
-as the desktop build. Tests do not replace a manual check of the window and audio.
+Tests cover note frequencies, keyboard geometry and hit detection, polyphonic
+output, sustain, release envelopes, and silence. They run without Raylib or a
+display. Check the window, held-key highlighting, and audio manually after a UI
+change. Remove `bin/` to clean app build output; keep `.deps/` to retain Raylib.
 
-`cmd/alt-synth` starts the app. Under `internal/`, `rayui` handles rendering,
-input, and audio; `app` manages chord selection; `chords` holds the catalog; and
-`signal` supplies pitch and waveform calculations.
+`src/main.c` handles the Raylib interface and input. `src/synth.c` contains note
+math, keyboard geometry, and synthesis, independent of the display and audio device.
 
 The bundled Space Mono Bold font uses the
-[SIL Open Font License](internal/rayui/assets/OFL.txt).
+[SIL Open Font License](assets/OFL.txt). [Raylib](https://www.raylib.com/) uses the
+zlib/libpng license.
