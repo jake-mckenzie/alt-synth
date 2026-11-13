@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate release tag
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          git merge-base --is-ancestor HEAD origin/main
+          test -f "docs/releases/$VERSION.md"
+
+      - name: Check out Raylib 5.5
+        uses: actions/checkout@v6
+        with:
+          repository: raysan5/raylib
+          ref: '5.5'
+          path: .deps/raylib-source
+
+      - name: Install native build dependencies
+        run: >-
+          sudo apt-get update && sudo apt-get install --yes
+          build-essential pkg-config cmake ninja-build libgl1-mesa-dev
+          libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev
+
+      - name: Build static Raylib with Ninja
+        run: |
+          cmake -S .deps/raylib-source -B .deps/raylib-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_INSTALL_PREFIX="$PWD/.deps/raylib" -DCMAKE_INSTALL_LIBDIR=lib
+          cmake --build .deps/raylib-build
+          cmake --install .deps/raylib-build
+
+      - name: Run core tests with sanitizers
+        run: ./test.sh
+        env:
+          CFLAGS: -O1 -g -fsanitize=address,undefined
+
+      - name: Build release binary
+        run: |
+          sh -n build.sh test.sh
+          ./build.sh
+          ./bin/alt-synth --help
+        env:
+          CFLAGS: -O2 -Werror
+          LDFLAGS: -s
+
+      - name: Package Linux release
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          mkdir -p dist/alt-synth/licenses dist/alt-synth/assets dist/alt-synth/docs/images
+          cp bin/alt-synth dist/alt-synth/alt-synth
+          cp README.md dist/alt-synth/README.md
+          cp assets/OFL.txt dist/alt-synth/assets/OFL.txt
+          cp docs/images/piano-view.png docs/images/qwerty-view.png dist/alt-synth/docs/images/
+          cp .deps/raylib-source/LICENSE dist/alt-synth/licenses/raylib-LICENSE.txt
+          tar -czf "dist/alt-synth_${VERSION}_linux_x86_64.tar.gz" -C dist alt-synth
+          cd dist
+          sha256sum "alt-synth_${VERSION}_linux_x86_64.tar.gz" > checksums.txt
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          gh release create "$VERSION" \
+            "dist/alt-synth_${VERSION}_linux_x86_64.tar.gz" dist/checksums.txt \
+            --verify-tag --draft --title "alt-synth $VERSION" \
+            --notes-file "docs/releases/$VERSION.md"
+          gh release edit "$VERSION" --draft=false --latest

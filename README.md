@@ -7,6 +7,13 @@ with piano and QWERTY displays, a waveform, and active-note levels.
 
 ![alt-synth QWERTY keyboard view](docs/images/qwerty-view.png)
 
+## Releases
+
+[GitHub Releases](https://github.com/jake-mckenzie/alt-synth/releases) provides
+Linux x86-64 packages. Extract the archive and run `./alt-synth/alt-synth`.
+Requires glibc 2.35+, an X11 display or XWayland, and system graphics/audio libraries.
+Check the download against the release's `checksums.txt`.
+
 ## Build and run
 
 Requires a C11 compiler, `pkg-config`, and Raylib 5.5+ development files.

@@ -1,5 +1,6 @@
 # Build output
 /bin/
+/dist/
 /.deps/
 
 # Operating-system metadata
