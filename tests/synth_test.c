@@ -20,6 +20,37 @@ static void test_keyboard(void) {
     assert(keyboard_hit(40, 270, bounds) == -1);
 }
 
+// Check all QWERTY note offsets, reserved controls, and octave-shift bounds.
+static void test_qwerty_mapping(void) {
+    bool seen[MIDI_NOTES] = {false};
+    int count = 0;
+    for (int row = 0; row < QWERTY_ROWS; ++row) {
+        for (int column = 0; column < QWERTY_COLUMNS; ++column) {
+            int offset = qwerty_note_offset(row, column);
+            if (offset == NO_NOTE)
+                continue;
+            assert(offset >= QWERTY_MIN_OFFSET && offset <= QWERTY_MAX_OFFSET);
+            assert(24 + offset >= 0 && 84 + offset < MIDI_NOTES);
+            assert(!seen[60 + offset]);
+            seen[60 + offset] = true;
+            ++count;
+        }
+    }
+    assert(count == 55);
+    assert(qwerty_note_offset(2, 0) == NO_NOTE);  // Caps Lock is intentionally inactive.
+    assert(qwerty_note_offset(2, 1) == 0);        // A remains middle C.
+    assert(qwerty_note_offset(1, 2) == 1);        // W remains C sharp.
+    assert(qwerty_note_offset(3, 1) == -12);      // Z extends the lower octave.
+    assert(qwerty_note_offset(0, 1) == 24);       // Number keys extend the upper range.
+    assert(qwerty_note_offset(0, 11) == NO_NOTE); // Volume down.
+    assert(qwerty_note_offset(0, 12) == NO_NOTE); // Volume up.
+    assert(qwerty_note_offset(0, 13) == NO_NOTE); // Panic.
+    assert(qwerty_note_offset(1, 0) == NO_NOTE);  // Filter.
+    assert(qwerty_note_offset(4, 3) == NO_NOTE);  // Sustain.
+    assert(qwerty_note_offset(-1, 0) == NO_NOTE);
+    assert(qwerty_note_offset(0, QWERTY_COLUMNS) == NO_NOTE);
+}
+
 // Check initial silence, A4 pitch, sustain release, polyphonic bounds, and panic.
 static void test_sound(void) {
     Synth synth;
@@ -196,6 +227,7 @@ int main(void) {
     note_name(61, name, sizeof(name));
     assert(strcmp(name, "C#4") == 0);
     test_keyboard();
+    test_qwerty_mapping();
     test_sound();
     test_tones();
     test_piano_and_synth_character();

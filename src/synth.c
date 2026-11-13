@@ -54,6 +54,22 @@ int keyboard_hit(float x, float y, KeyRect bounds) {
     return -1;
 }
 
+// Return a QWERTY key's semitone offset, or NO_NOTE for a control, disabled key, or empty cell.
+int qwerty_note_offset(int row, int column) {
+    // Home-row piano bindings stay familiar. Other rows extend the playable range.
+    // Tab, Space, -/=, and Backspace retain their control actions.
+    static const int offsets[QWERTY_ROWS][QWERTY_COLUMNS] = {
+        {34, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, NO_NOTE, NO_NOTE, NO_NOTE, NO_NOTE},
+        {NO_NOTE, 18, 1, 3, 19, 6, 8, 10, 20, 13, 15, 21, 22, 23, NO_NOTE},
+        {NO_NOTE, 0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, -23, NO_NOTE, NO_NOTE},
+        {-22, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -21, NO_NOTE, NO_NOTE, NO_NOTE},
+        {-20, -19, -18, NO_NOTE, -17, -16, -15, -14, NO_NOTE, NO_NOTE, NO_NOTE, NO_NOTE, NO_NOTE,
+         NO_NOTE, NO_NOTE}};
+    if (row < 0 || row >= QWERTY_ROWS || column < 0 || column >= QWERTY_COLUMNS)
+        return NO_NOTE;
+    return offsets[row][column];
+}
+
 // Return the filter label for a valid tone, or Unknown for an invalid value.
 const char *tone_name(Tone tone) {
     static const char *names[TONE_COUNT] = {"Piano", "Warm keys", "Bell", "Soft synth", "Chiptune"};

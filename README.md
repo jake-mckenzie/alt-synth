@@ -65,7 +65,14 @@ cmake --install .deps/raylib-build
 
 Starts at **C4–F5** (middle C) with **Chiptune** selected. Other sounds are Piano,
 Warm keys, Bell, and Soft synth. Sounds are synthesized; no samples are required.
-Amber keys are held; green keys are sustained. Both displays use the same bindings.
+Lighter QWERTY keys play natural notes; darker ones play sharps. Amber keys are
+held; green keys are sustained. Piano mode uses the bindings above.
+QWERTY mode makes 55 keys playable, including modifiers: the lower
+row adds bass notes, unused upper-row keys and digits extend the high range, and
+modifiers add lower notes. The original home-row piano bindings stay the same.
+Caps Lock is intentionally inactive. The default QWERTY range is C#2–A#6. Tab, Space, `-`/`=`, and Backspace keep their
+control actions, accessible by mouse too. Switching views silences notes; release
+held controls before resuming.
 Opening help or leaving the window silences notes; release playing controls before
 resuming. Keyboard hardware may limit simultaneous presses. External MIDI input
 is not implemented.
@@ -78,7 +85,7 @@ CFLAGS='-O1 -g -fsanitize=address,undefined' ./test.sh
 CFLAGS='-O0 -g' ./build.sh
 ```
 
-Core tests run without Raylib or a display. Check UI and audio changes manually.
+Core tests include the complete QWERTY mapping and run without Raylib or a display. Check UI and audio changes manually.
 Compiler overrides: `CC`, `CPPFLAGS`, `CFLAGS`, `LDFLAGS`. Delete `bin/` to clean
 app output; `.deps/` keeps the local Raylib build.
 
