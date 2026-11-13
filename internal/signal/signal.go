@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/jake-mckenzie/alt-tab/internal/chords"
+	"github.com/jake-mckenzie/alt-synth/internal/chords"
 )
 
 // StandardTuningMIDI lists open strings from high e to low E.

@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/jake-mckenzie/alt-tab/internal/chords"
+	"github.com/jake-mckenzie/alt-synth/internal/chords"
 )
 
 // TestNotesUsesStandardTuning checks pitch names and equal temperament.

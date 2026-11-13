@@ -1,13 +1,11 @@
 GO ?= go
 
-APP = alt-tab
-CMD = ./cmd/alt-tab
-RAYLIB_APP = alt-tab-raylib
-RAYLIB_CMD = ./cmd/alt-tab-raylib
+APP = alt-synth
+CMD = ./cmd/alt-synth
+RAYLIB_CMD = ./cmd/alt-synth
 BIN_DIR = bin
 
 TARGET = $(BIN_DIR)/$(APP)
-RAYLIB_TARGET = $(BIN_DIR)/$(RAYLIB_APP)
 RAYLIB_TAGS = raylib,x11
 
 BUILD ?= debug
@@ -23,13 +21,11 @@ endif
 
 all: build
 
-build: check-deps go.mod go.sum $(GO_FILES)
+build: check-raylib-deps go.mod go.sum $(GO_FILES)
 	mkdir -p $(dir $(TARGET))
-	$(GO) build $(GO_BUILD_FLAGS) -o $(TARGET) $(CMD)
+	$(GO) build -tags $(RAYLIB_TAGS) $(GO_BUILD_FLAGS) -o $(TARGET) $(CMD)
 
-build-raylib: check-raylib-deps go.mod go.sum $(GO_FILES)
-	mkdir -p $(dir $(RAYLIB_TARGET))
-	$(GO) build -tags $(RAYLIB_TAGS) $(GO_BUILD_FLAGS) -o $(RAYLIB_TARGET) $(RAYLIB_CMD)
+build-raylib: build
 
 fmt:
 	$(GO) fmt ./...
@@ -73,15 +69,14 @@ race: check-deps
 	$(GO) test -race ./internal/...
 
 vet: check-deps
-	$(GO) vet ./...
+	$(GO) vet -tags $(RAYLIB_TAGS) ./...
 
 check: fmt-check test test-raylib race vet
 
 run: build
 	./$(TARGET)
 
-run-raylib: build-raylib
-	./$(RAYLIB_TARGET)
+run-raylib: run
 
 clean:
 	rm -rf $(BIN_DIR)

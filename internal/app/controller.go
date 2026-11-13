@@ -4,7 +4,7 @@ package app
 import (
 	"errors"
 
-	"github.com/jake-mckenzie/alt-tab/internal/chords"
+	"github.com/jake-mckenzie/alt-synth/internal/chords"
 )
 
 // Kind identifies the selected member of a natural chord family.
@@ -23,7 +23,7 @@ type Family struct {
 	Minor      string
 }
 
-// Controller owns chord selection shared by terminal and graphical frontends.
+// Controller owns chord selection for the desktop interface.
 type Controller struct {
 	catalog       chords.Catalog
 	families      []Family

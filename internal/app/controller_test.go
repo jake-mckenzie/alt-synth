@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jake-mckenzie/alt-tab/internal/chords"
+	"github.com/jake-mckenzie/alt-synth/internal/chords"
 )
 
 // TestControllerNavigatesCatalog checks family, kind, and voicing movement.

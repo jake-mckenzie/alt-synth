@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jake-mckenzie/alt-tab/internal/chords"
-	"github.com/jake-mckenzie/alt-tab/internal/signal"
+	"github.com/jake-mckenzie/alt-synth/internal/chords"
+	"github.com/jake-mckenzie/alt-synth/internal/signal"
 )
 
 // TestPalettesMatchApprovedSet keeps the runtime cycle aligned with documentation.

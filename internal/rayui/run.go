@@ -13,9 +13,9 @@ import (
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 
-	"github.com/jake-mckenzie/alt-tab/internal/app"
-	"github.com/jake-mckenzie/alt-tab/internal/chords"
-	"github.com/jake-mckenzie/alt-tab/internal/signal"
+	"github.com/jake-mckenzie/alt-synth/internal/app"
+	"github.com/jake-mckenzie/alt-synth/internal/chords"
+	"github.com/jake-mckenzie/alt-synth/internal/signal"
 )
 
 const (
@@ -187,7 +187,7 @@ func Run(catalog chords.Catalog) error {
 	}
 
 	rl.SetConfigFlags(rl.FlagWindowResizable | rl.FlagVsyncHint)
-	rl.InitWindow(windowWidth, windowHeight, "Alt-Tab · Raylib")
+	rl.InitWindow(windowWidth, windowHeight, "Alt-Synth")
 	if !rl.IsWindowReady() {
 		return errors.New("raylib window initialization failed")
 	}
@@ -423,8 +423,8 @@ func (gui *viewer) drawHeader(bounds rl.Rectangle, theme palette) {
 	drawPanel(bounds, theme)
 	// The small status lamp and recessed controls echo the original console shell.
 	rl.DrawCircleV(rl.Vector2{X: bounds.X + 17, Y: bounds.Y + 27}, 4, theme.secondary)
-	drawTextSpaced("ALT-TAB", bounds.X+38, bounds.Y+5, 42, 3.5, theme.accent)
-	drawText("RAYLIB CHORD VIEWER - "+strings.ToUpper(theme.name),
+	drawTextSpaced("ALT-SYNTH", bounds.X+38, bounds.Y+5, 42, 3.5, theme.accent)
+	drawText("GUITAR CHORD VIEWER - "+strings.ToUpper(theme.name),
 		bounds.X+38, bounds.Y+54, 22, theme.muted)
 	controls := "←/→ CHORD  ↑/↓ TYPE  1-9 VOICING  X NECK  N TAB  T THEME  SPACE PLAY  F1 HELP  Q QUIT"
 	size := measureText(controls, 22)

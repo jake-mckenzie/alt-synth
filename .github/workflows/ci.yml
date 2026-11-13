@@ -3,8 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - master
-      - raylib
+      - main
   pull_request:
 
 permissions:
@@ -31,9 +30,6 @@ jobs:
 
       - name: Build release binary
         run: make BUILD=release build
-
-      - name: Build Raylib release binary
-        run: make BUILD=release build-raylib
 
       - name: Run quality checks
         run: make check

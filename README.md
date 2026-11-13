@@ -1,15 +1,8 @@
-# Alt-Tab
-
-[![CI](https://github.com/jake-mckenzie/alt-tab/actions/workflows/ci.yml/badge.svg)](https://github.com/jake-mckenzie/alt-tab/actions/workflows/ci.yml)
+# Alt-Synth
 
 A guitar chord viewer built with Go and Raylib. Browse chord shapes, hear them
 played back, and see their waveforms and frequency spectra. Starts in CRT Amber;
 press `t` once for Neon Dark: near-black, neon green, cyan, and purple accents.
-
-This is the `raylib` branch. The original terminal version is on `master`.
-[Branch notes](docs/branches.md).
-
-![Alt-Tab Raylib desktop interface](docs/images/raylib-desktop-preview.png)
 
 ## Run it
 
@@ -18,12 +11,11 @@ the OpenGL, X11, and xkbcommon development libraries; on macOS, install Xcode
 Command Line Tools. The Go module includes Raylib itself.
 
 ```bash
-git clone --branch raylib https://github.com/jake-mckenzie/alt-tab.git
-cd alt-tab
-make run-raylib
+cd ~/Projects/alt-synth
+go mod download
+go mod verify
+make run
 ```
-
-For the terminal interface included in this branch, use `make run`.
 
 ## Controls
 
@@ -40,9 +32,6 @@ For the terminal interface included in this branch, use `make run`.
 | `F1` / `?` | Toggle help |
 | `q` / `Esc` | Quit (`Esc` closes help first) |
 
-In the terminal interface, use `v` to cycle voicings, `?` for help, `w` to toggle the waveform, and
-`q` or `Ctrl+C` to quit. The mouse wheel scrolls; `Esc` closes help.
-
 ## Chords
 
 Three voicings each for **A, Am, B, Bb, C, Cm, D, Dm, E, Em, F, F#, G, and Gm**.
@@ -56,16 +45,18 @@ Changing chords keeps your voicing number, or returns to 1 if it isn’t availab
 
 | Command | Purpose |
 | --- | --- |
-| `make build-raylib` | Build `bin/alt-tab-raylib` |
-| `make BUILD=release build-raylib` | Build a smaller release binary |
+| `make build` | Build `bin/alt-synth` |
+| `make BUILD=release build` | Build a smaller release binary |
 | `make test` | Run the Go tests without graphics dependencies |
 | `make check` | Run formatting, Go and Raylib tests, race checks, and vet |
 | `make clean` | Remove build output |
 
 `make check` needs the same graphics dependencies as the desktop build.
 
-The interfaces live in `internal/rayui` and `internal/tui`. They share the chord
-catalog (`internal/chords`), navigation (`internal/app`), and pitch calculations
-(`internal/signal`). Entry points are in `cmd/`.
+The desktop interface lives in `internal/rayui`, with the chord catalog in
+`internal/chords`, navigation in `internal/app`, and pitch calculations in
+`internal/signal`. The entry point is `cmd/alt-synth`.
+
+`make build-raylib` and `make run-raylib` remain aliases for compatibility.
 
 The bundled Space Mono Bold font uses the [SIL Open Font License](internal/rayui/assets/OFL.txt).
