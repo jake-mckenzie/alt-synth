@@ -3,6 +3,10 @@
 A polyphonic desktop synth in C and Raylib. Play from your keyboard or mouse,
 with piano and QWERTY displays, a waveform, and active-note levels.
 
+![alt-synth piano view](docs/images/piano-view.png)
+
+![alt-synth QWERTY keyboard view](docs/images/qwerty-view.png)
+
 ## Build and run
 
 Requires a C11 compiler, `pkg-config`, and Raylib 5.5+ development files.
