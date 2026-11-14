@@ -16,7 +16,7 @@ typedef struct
 
 } NoteBinding;
 
-static const NoteBinding bindings[KEY_COUNT] = 
+static const NoteBinding bindings[ KEY_COUNT ] = 
 {
   { KEY_A, "A" }, { KEY_W, "W" }, { KEY_S, "S" }, { KEY_E, "E" }, { KEY_D, "D" }, { KEY_F, "F" }, 
   { KEY_T, "T" }, { KEY_G, "G" }, { KEY_Y, "Y" }, { KEY_H, "H" }, { KEY_U, "U" }, { KEY_J, "J" }, 
@@ -37,7 +37,7 @@ static Font font;
 // Draw a UI label with the shared font size scale and character spacing.
 static void text( const char *label, float x, float y, float size, Color color )
 {
-  DrawTextEx( font, label, ( Vector2 ){ x, y }, size * TEXT_SCALE, 1, color  );
+  DrawTextEx( font, label, ( Vector2 ){ x, y }, size * TEXT_SCALE, 1, color );
 }
 
 // Center text using the same measured font metrics as the label renderer.
@@ -51,7 +51,7 @@ static void centered( const char *label, Rectangle bounds, float size, Color col
 // Draw a dashboard panel and its section heading.
 static void panel( Rectangle r, const char *title )
 {
-  DrawRectangleRounded(  r, 0.035f, 8, panel_color );
+  DrawRectangleRounded( r, 0.035f, 8, panel_color );
   DrawRectangleRoundedLinesEx( r, 0.035f, 8, 1, border );
   text( title, r.x + 20, r.y + 15, 18, muted );
 }
@@ -63,7 +63,7 @@ static void draw_button( Rectangle bounds, const char *label, float size,
   bool hover = enabled && CheckCollisionPointRec( GetMousePosition(), bounds );
   DrawRectangleRounded( bounds, .15f, 6, hover ? border : ( primary ? panel_color : background ));
   DrawRectangleRoundedLinesEx( bounds, .15f, 6, 1, primary ? accent : muted );
-  centered(  label, bounds, size, primary ? accent : text_color );
+  centered( label, bounds, size, primary ? accent : text_color );
 }
 
 // Convert display-independent keyboard bounds to a Raylib rectangle.
@@ -87,7 +87,7 @@ static void draw_keyboard( KeyRect bounds, int base, const bool held[ MIDI_NOTES
       Rectangle r = rectangle(keyboard_rect( i, bounds ));
       int note = base + i;
       bool latched = synth->sounding[ note ];
-      Color fill = black ? ( Color ){ 30, 33, 39, 255 } : ( Color ){ 224, 225, 217, 255  };
+      Color fill = black ? ( Color ){ 30, 33, 39, 255 } : ( Color ){ 224, 225, 217, 255 };
       Color ink = black ? text_color : background;
       
       if ( held[ note ] )
@@ -247,8 +247,8 @@ static void read_note_keys( bool held[ MIDI_NOTES ], int base, bool computer_vie
 // Accept a control from either its physical key or a mouse press on its keycap.
 static bool control_pressed( int code, int mouse_key )
 {
-  return IsKeyPressed( code ) || ( IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) && 
-      mouse_key == code );
+  return IsKeyPressed( code ) || ( IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) &&
+    mouse_key == code );
 }
 
 // Convert a staggered QWERTY key width and row into screen bounds.
@@ -257,7 +257,7 @@ static Rectangle computer_key_rect( KeyRect bounds, int row, float offset, float
   float unit = bounds.width / 15;
   float row_height = bounds.height / QWERTY_ROWS;
 
-  return ( Rectangle ){ bounds.x + offset * unit + 2, bounds.y + row * row_height + 2, 
+  return ( Rectangle ){ bounds.x + offset * unit + 2, bounds.y + row * row_height + 2,
     units * unit - 4, row_height - 4 };
 }
 
@@ -318,6 +318,7 @@ static void draw_computer_keyboard( KeyRect bounds, int base, const bool held[ M
 
       DrawRectangleRounded( r, .12f, 6, fill );
       DrawRectangleRoundedLinesEx( r, .12f, 6, 1, note >= 0 ? muted : border );
+
       if ( note >= 0 )
       {
         centered( key.label, ( Rectangle ){ r.x, r.y, r.width, r.height * .55f }, 16, ink );
@@ -327,9 +328,7 @@ static void draw_computer_keyboard( KeyRect bounds, int base, const bool held[ M
                  11, ink );
       }
       else
-      { 
-        centered( key.label, r, 14, ink );
-      }
+      { centered( key.label, r, 14, ink ); }
     }
   }
 }
@@ -343,14 +342,14 @@ static void draw_wave( Rectangle r, const float *samples )
   for ( int i = 0; i <= 4; ++i )
   {
     float y = plot.y + plot.height * i / 4;
-    DrawLineEx(( Vector2 ){ plot.x, y }, ( Vector2 ){ plot.x + plot.width, y }, 1, border );
+    DrawLineEx( ( Vector2 ){ plot.x, y }, ( Vector2 ){ plot.x + plot.width, y }, 1, border );
   }
 
   for ( int i = 1; i < AUDIO_FRAMES; ++i )
   {
     Vector2 a = { plot.x + plot.width * ( i - 1 ) / ( AUDIO_FRAMES - 1 ),
                  plot.y + plot.height * ( .5f - .45f * samples[ i - 1 ] )};
-    Vector2 b = {plot.x + plot.width * i / ( AUDIO_FRAMES - 1 ),
+    Vector2 b = { plot.x + plot.width * i / ( AUDIO_FRAMES - 1 ),
                  plot.y + plot.height * ( .5f - .45f * samples[ i ] )};
     DrawLineEx( a, b, 1.5f, signal_color );
   }
@@ -365,7 +364,7 @@ static void draw_pitches( Rectangle r, const Synth *synth )
   panel( r, "VOICES / PITCH LEVELS" );
   Rectangle plot = { r.x + 24, r.y + 52, r.width - 48, r.height - 80 };
   float bottom = plot.y + plot.height;
-  DrawLineEx(( Vector2 ){ plot.x, bottom }, ( Vector2 ){ plot.x + plot.width, bottom}, 1, border );
+  DrawLineEx( ( Vector2 ){ plot.x, bottom }, ( Vector2 ){ plot.x + plot.width, bottom}, 1, border );
   // Keep the usual pitch axis unless an extended QWERTY note falls outside it.
   int low = 24, high = 108;
 
@@ -383,264 +382,334 @@ static void draw_pitches( Rectangle r, const Synth *synth )
 
   for ( int note = low; note <= high; ++note )
   {
-      float x = plot.x + plot.width * (  note - low ) / ( high - low );
-      if ( note % 12 == 0 )
-      {
-          DrawLineEx(( Vector2 ){ x, plot.y }, ( Vector2 ){ x, bottom }, 1, border );
-          char label[  8 ];
-          note_name( note, label, sizeof( label ));
-          text( label, x - 9, bottom + 6, 12, muted );
-      }
+    float x = plot.x + plot.width * ( note - low ) / ( high - low );
 
-      if ( synth->level[ note ] < .001f)
-      { continue; }
+    if ( note % 12 == 0 )
+    {
+      DrawLineEx(( Vector2 ){ x, plot.y }, ( Vector2 ){ x, bottom }, 1, border );
+      char label[ 8 ];
+      note_name( note, label, sizeof( label ));
+      text( label, x - 9, bottom + 6, 12, muted );
+    }
 
-      float y = bottom - plot.height * synth->level[note];
-      DrawLineEx((Vector2){x, bottom}, (Vector2){x, y}, 4, accent);
-      DrawCircleV((Vector2){x, y}, 3, signal_color);
+    if ( synth->level[ note ] < .001f)
+    { continue; }
+
+    float y = bottom - plot.height * synth->level[ note ];
+    DrawLineEx( ( Vector2 ){ x, bottom }, ( Vector2 ){ x, y }, 4, accent );
+    DrawCircleV( ( Vector2 ){ x, y }, 3, signal_color );
   }
 }
 
 // Draw one aligned control binding and its action in the help overlay.
-static void help_row(float x, float y, const char *keys, const char *action) {
-    text(keys, x, y, 16, accent);
-    text(action, x + 150, y, 16, text_color);
+static void help_row( float x, float y, const char *keys, const char *action )
+{
+  text( keys, x, y, 16, accent );
+  text( action, x + 150, y, 16, text_color );
 }
 
 // Draw the key mapping and grouped controls over a dimmed application view.
-static void draw_help(int width, int height) {
-    DrawRectangle(0, 0, width, height, Fade(BLACK, .75f));
-    float box_width = fminf(width - 64, 1080);
-    Rectangle box = {(width - box_width) / 2, (height - 536) / 2.0f, box_width, 536};
-    panel(box, "alt-synth / keyboard help");
-    float left = box.x + 24;
-    text("Hold notes for chords. Release keys to stop.", left, box.y + 56, 16, text_color);
+static void draw_help( int width, int height )
+{
+  DrawRectangle( 0, 0, width, height, Fade( BLACK, .75f ));
+  float box_width = fminf( width - 64, 1080 );
+  Rectangle box = { ( width - box_width ) / 2, ( height - 536 ) / 2.0f, box_width, 536 };
+  panel( box, "alt-synth / keyboard help" );
+  float left = box.x + 24;
+  text( "Hold notes for chords. Release keys to stop.", left, box.y + 56, 16, text_color );
 
-    // Keycaps follow the piano's staggered layout, using the same labels as the keys.
-    float key_start = left + 136;
-    float unit = (box.width - 48 - 136) / WHITE_KEY_COUNT;
-    int whites = 0;
-    text("BLACK KEYS", left, box.y + 112, 14, muted);
-    text("WHITE KEYS", left, box.y + 158, 14, muted);
-    for (int i = 0; i < KEY_COUNT; ++i) {
-        bool black = note_is_black(i);
-        float cap_width = unit - 10;
-        float x = key_start + whites * unit + 5;
-        float y = box.y + 148;
-        if (black) {
-            x = key_start + whites * unit - cap_width / 2;
-            y = box.y + 102;
-        } else
-            ++whites;
-        Rectangle cap = {x, y, cap_width, 38};
-        DrawRectangleRounded(cap, .15f, 6, black ? background : border);
-        DrawRectangleRoundedLinesEx(cap, .15f, 6, 1, black ? border : muted);
-        centered(bindings[i].label, cap, 17, black ? accent : text_color);
+  // Keycaps follow the piano's staggered layout, using the same labels as the keys.
+  float key_start = left + 136;
+  float unit = ( box.width - 48 - 136 ) / WHITE_KEY_COUNT;
+  int whites = 0;
+  text( "BLACK KEYS", left, box.y + 112, 14, muted );
+  text( "WHITE KEYS", left, box.y + 158, 14, muted );
+
+  for ( int i = 0; i < KEY_COUNT; ++i )
+  {
+    bool black = note_is_black( i );
+    float cap_width = unit - 10;
+    float x = key_start + whites * unit + 5;
+    float y = box.y + 148;
+
+    if ( black )
+    {
+      x = key_start + whites * unit - cap_width / 2;
+      y = box.y + 102;
     }
+    else
+    { ++whites; }
 
-    float divider_y = box.y + 210;
-    DrawLineEx((Vector2){left, divider_y}, (Vector2){box.x + box.width - 24, divider_y}, 1, border);
-    float right = box.x + box.width / 2 + 16;
-    text("PLAYING", left, box.y + 232, 14, muted);
-    text("CONTROLS", right, box.y + 232, 14, muted);
-    help_row(left, box.y + 274, "Mouse", "Hold / drag notes");
-    help_row(left, box.y + 316, "Space", "Hold sustain");
-    help_row(left, box.y + 358, "Left/Right", "Shift octave");
-    help_row(left, box.y + 400, "- / =", "Adjust volume");
-    help_row(right, box.y + 274, "Tab/Filter", "Cycle sounds");
-    help_row(right, box.y + 316, "Backspace", "Silence notes");
-    help_row(right, box.y + 358, "F1", "Toggle help");
-    help_row(right, box.y + 400, "Esc", "Close help");
+    Rectangle cap = { x, y, cap_width, 38 };
+    DrawRectangleRounded( cap, .15f, 6, black ? background : border );
+    DrawRectangleRoundedLinesEx( cap, .15f, 6, 1, black ? border : muted );
+    centered( bindings[ i ].label, cap, 17, black ? accent : text_color );
+  }
 
-    text("QWERTY adds more notes. Caps Lock is unused.", left, box.y + 478, 14, muted);
-    text("F2 switches views. Esc quits outside help.", left, box.y + 502, 14, muted);
+  float divider_y = box.y + 210;
+  DrawLineEx( ( Vector2 ){ left, divider_y }, ( Vector2 ){ box.x + box.width - 24, divider_y }, 1, border );
+  float right = box.x + box.width / 2 + 16;
+  text( "PLAYING", left, box.y + 232, 14, muted );
+  text( "CONTROLS", right, box.y + 232, 14, muted );
+  help_row( left, box.y + 274, "Mouse", "Hold / drag notes" );
+  help_row( left, box.y + 316, "Space", "Hold sustain" );
+  help_row( left, box.y + 358, "Left/Right", "Shift octave" );
+  help_row( left, box.y + 400, "- / =", "Adjust volume" );
+  help_row( right, box.y + 274, "Tab/Filter", "Cycle sounds" );
+  help_row( right, box.y + 316, "Backspace", "Silence notes" );
+  help_row( right, box.y + 358, "F1", "Toggle help" );
+  help_row( right, box.y + 400, "Esc", "Close help" );
+
+  text( "QWERTY adds more notes. Caps Lock is unused.", left, box.y + 478, 14, muted );
+  text( "F2 switches views. Esc quits outside help.", left, box.y + 502, 14, muted );
 }
 
 // Print command-line help or manage the window, input, audio stream, and rendering loop.
-int main(int argc, char **argv) {
-    if (argc > 1) {
-        if (strcmp(argv[1], "--help") == 0) {
-            puts("alt-synth: a polyphonic piano keyboard");
-            for (int black = 0; black <= 1; ++black) {
-                printf("%s keys:", black ? "Black" : "White");
-                for (int i = 0; i < KEY_COUNT; ++i)
-                    if (note_is_black(i) == (bool)black)
-                        printf(" %s", bindings[i].label);
-                putchar('\n');
-            }
-            puts("Space sustain | arrows octave | -/= volume | Backspace silence | "
-                 "Tab filter | F2 keyboard view | F1 help | Esc quit\n"
-                 "QWERTY view: extra keys play notes; Caps Lock is unused. Click controls to use "
-                 "them.");
-            return 0;
-        }
-        fprintf(stderr, "Usage: %s [--help]\n", argv[0]);
-        return 1;
-    }
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-    InitWindow(1280, 760, "alt-synth");
-    if (!IsWindowReady())
-        return 1;
-    SetWindowMinSize(960, 640);
-    SetExitKey(KEY_NULL);
-    SetTargetFPS(120);
-    font = LoadFontFromMemory(".ttf", font_data, (int)sizeof(font_data), 64, NULL, 0);
-    if (!IsFontValid(font)) {
-        CloseWindow();
-        return 1;
-    }
-    SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
+int main( int argc, char **argv )
+{
+  if ( argc > 1 )
+  {
+    if ( strcmp( argv[ 1 ], "--help" ) == 0 )
+    {
+      puts( "alt-synth: a polyphonic piano keyboard" );
 
-    Synth synth;
-    synth_init(&synth);
-    InitAudioDevice();
-    bool audio_ready = IsAudioDeviceReady();
-    AudioStream stream = {0};
-    float samples[AUDIO_FRAMES] = {0};
-    if (audio_ready) {
-        SetAudioStreamBufferSizeDefault(AUDIO_FRAMES);
-        stream = LoadAudioStream(SAMPLE_RATE, 32, 1);
-        if (!IsAudioStreamValid(stream))
-            audio_ready = false;
-        else
-            PlayAudioStream(stream);
-    }
-    int base = 60; // C4 (middle C).
-    bool help = false, quit = false, sustain = false, blocked = false;
-    bool computer_view = false;
-    while (!quit && !WindowShouldClose()) {
-        int width = GetScreenWidth(), height = GetScreenHeight();
-        float margin = 24, gap = 16;
-        float keyboard_height = fminf(260, height * .36f);
-        KeyRect keys = {margin + 16, height - keyboard_height - 48, width - 2 * (margin + 16),
-                        keyboard_height};
-        Rectangle keyboard_panel = {margin, keys.y - 56, width - 2 * margin, keyboard_height + 72};
-        float graph_y = 128, graph_height = keyboard_panel.y - graph_y - gap;
-        float graph_width = (width - 2 * margin - gap) / 2;
-        Rectangle filter_button = {width - 360, 73, 336, 42};
-        Rectangle view_button = {width - 298, keyboard_panel.y + 8, 250, 38};
-        bool held[MIDI_NOTES] = {false};
-        if (IsKeyPressed(KEY_F1))
-            help = !help;
-        if (IsKeyPressed(KEY_ESCAPE)) {
-            if (help)
-                help = false;
-            else
-                quit = true;
+      for ( int black = 0; black <= 1; ++black )
+      {
+        printf( "%s keys:", black ? "Black" : "White" );
+        for ( int i = 0; i < KEY_COUNT; ++i )
+        {
+          if ( note_is_black( i ) == ( bool )black )
+          { printf( " %s", bindings[ i ].label ); }
         }
-        int mouse_key = computer_view ? computer_hit(GetMousePosition(), keys) : KEY_NULL;
-        bool focused = IsWindowFocused() && !IsWindowMinimized() && !help;
-        if (focused) {
-            if (IsKeyPressed(KEY_F2) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-                                         CheckCollisionPointRec(GetMousePosition(), view_button))) {
-                computer_view = !computer_view;
-                synth_silence(&synth);
-                blocked = true;
-                mouse_key = computer_view ? computer_hit(GetMousePosition(), keys) : KEY_NULL;
-            }
-            bool filter_click = IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-                                CheckCollisionPointRec(GetMousePosition(), filter_button);
-            if (filter_click || control_pressed(KEY_TAB, mouse_key))
-                synth_set_tone(&synth, (Tone)((synth.tone + 1) % TONE_COUNT));
-            int old_base = base;
-            if (IsKeyPressed(KEY_LEFT) && base > 24)
-                base -= 12;
-            if (IsKeyPressed(KEY_RIGHT) && base < 84)
-                base += 12;
-            if (old_base != base)
-                synth_silence(&synth);
-            if (control_pressed(KEY_MINUS, mouse_key))
-                synth.volume = fmaxf(0, synth.volume - .05f);
-            if (control_pressed(KEY_EQUAL, mouse_key))
-                synth.volume = fminf(1, synth.volume + .05f);
-            read_note_keys(held, base, computer_view);
-            sustain = IsKeyDown(KEY_SPACE);
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-                Vector2 mouse = GetMousePosition();
-                int note = computer_view ? computer_note(mouse_key, base) : -1;
-                if (!computer_view) {
-                    int index = keyboard_hit(mouse.x, mouse.y, keys);
-                    if (index >= 0)
-                        note = base + index;
-                }
-                if (note >= 0)
-                    held[note] = true;
-                if (mouse_key == KEY_SPACE)
-                    sustain = true;
-            }
-        } else {
-            blocked = true;
-            synth_silence(&synth);
-            sustain = false;
-        }
-        // Panic/focus loss suppresses existing holds until all playing controls are
-        // released.
-        if (focused && control_pressed(KEY_BACKSPACE, mouse_key)) {
-            blocked = true;
-            synth_silence(&synth);
-        }
-        if (blocked) {
-            bool any = IsKeyDown(KEY_SPACE) || IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-            bool physical[MIDI_NOTES] = {false};
-            read_note_keys(physical, base, computer_view);
-            for (int note = 0; note < MIDI_NOTES; ++note)
-                any = any || physical[note];
-            if (!any)
-                blocked = false;
-            memset(held, 0, sizeof(held));
-            sustain = false;
-        }
-        synth_notes(&synth, held, sustain);
-        if (audio_ready) {
-            while (IsAudioStreamProcessed(stream)) {
-                synth_render(&synth, samples, AUDIO_FRAMES);
-                UpdateAudioStream(stream, samples, AUDIO_FRAMES);
-            }
-        } else
-            synth_render(&synth, samples, AUDIO_FRAMES);
+        putchar( '\n' );
+      }
 
-        BeginDrawing();
-        ClearBackground(background);
-        text("alt-synth", margin, 22, 36, accent);
-        text("POLYPHONIC KEYBOARD", margin + 290, 34, 17, muted);
-        char status[100], first[8], last[8];
-        note_name(base + (computer_view ? QWERTY_MIN_OFFSET : 0), first, sizeof(first));
-        note_name(base + (computer_view ? QWERTY_MAX_OFFSET : KEY_COUNT - 1), last, sizeof(last));
-        snprintf(status, sizeof(status), "%s-%s  VOL %d%%  SUSTAIN %s", first, last,
-                 (int)lroundf(synth.volume * 100), sustain ? "ON" : "OFF");
-        text(status, margin, 80, 22, text_color);
-        if (!audio_ready)
-            text("AUDIO UNAVAILABLE", width - 345, 32, 20, accent);
-        else
-            text("F1 HELP", width - 155, 32, 20, muted);
-        char filter_label[64];
-        snprintf(filter_label, sizeof(filter_label), "FILTER: %s", tone_name(synth.tone));
-        draw_button(filter_button, filter_label, 20, true, !help);
-        draw_wave((Rectangle){margin, graph_y, graph_width, graph_height}, samples);
-        draw_pitches((Rectangle){margin + graph_width + gap, graph_y, graph_width, graph_height},
-                     &synth);
-        panel(keyboard_panel, computer_view ? "LIGHTER = NATURAL NOTES / DARKER = SHARPS"
-                                            : "HOLD KEYS TO PLAY / SPACE TO SUSTAIN");
-        draw_button(view_button, computer_view ? "F2: QWERTY VIEW" : "F2: PIANO VIEW", 16, false,
-                    !help);
-        if (computer_view)
-            draw_computer_keyboard(keys, base, held, &synth, sustain, mouse_key,
-                                   focused && !blocked);
-        else
-            draw_keyboard(keys, base, held, &synth);
-        text("ARROWS octave   -/= volume   BACKSPACE silence   ESC quit", margin, height - 29, 18,
-             muted);
-        if (help)
-            draw_help(width, height);
-        EndDrawing();
+      puts( "Space sustain | arrows octave | -/= volume | Backspace silence | "
+           "Tab filter | F2 keyboard view | F1 help | Esc quit\n"
+           "QWERTY view: extra keys play notes; Caps Lock is unused. Click controls to use "
+           "them." );
+      return 0;
     }
-    if (audio_ready) {
-        StopAudioStream(stream);
-        UnloadAudioStream(stream);
+
+    fprintf( stderr, "Usage: %s [--help]\n", argv[ 0 ] );
+    return 1;
+  }
+
+  SetConfigFlags( FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT );
+  InitWindow( 1280, 760, "alt-synth" );
+
+  if ( !IsWindowReady() )
+  { return 1; }
+
+  SetWindowMinSize( 960, 640 );
+  SetExitKey( KEY_NULL );
+  SetTargetFPS( 120 );
+  font = LoadFontFromMemory( ".ttf", font_data, ( int )sizeof( font_data ), 64, NULL, 0 );
+
+  if ( !IsFontValid( font ) )
+  {
+      CloseWindow();
+      return 1;
+  }
+
+  SetTextureFilter( font.texture, TEXTURE_FILTER_BILINEAR );
+
+  Synth synth;
+  synth_init( &synth );
+  InitAudioDevice();
+  bool audio_ready = IsAudioDeviceReady();
+  AudioStream stream = { 0 };
+  float samples[ AUDIO_FRAMES ] = { 0 };
+
+  if ( audio_ready )
+  {
+    SetAudioStreamBufferSizeDefault( AUDIO_FRAMES );
+    stream = LoadAudioStream( SAMPLE_RATE, 32, 1 );
+
+    if ( !IsAudioStreamValid( stream ) )
+    { audio_ready = false; }
+    else
+    { PlayAudioStream( stream ); }
+  }
+
+  int base = 60; // C4 (middle C).
+  bool help = false, quit = false, sustain = false, blocked = false;
+  bool computer_view = false;
+
+  while ( !quit && !WindowShouldClose() )
+  {
+    int width = GetScreenWidth(), height = GetScreenHeight();
+    float margin = 24, gap = 16;
+    float keyboard_height = fminf( 260, height * .36f );
+    KeyRect keys = { margin + 16, height - keyboard_height - 48, width - 2 * ( margin + 16 ),
+                    keyboard_height };
+    Rectangle keyboard_panel = { margin, keys.y - 56, width - 2 * margin, keyboard_height + 72 };
+    float graph_y = 128, graph_height = keyboard_panel.y - graph_y - gap;
+    float graph_width = ( width - 2 * margin - gap ) / 2;
+    Rectangle filter_button = { width - 360, 73, 336, 42 };
+    Rectangle view_button = { width - 298, keyboard_panel.y + 8, 250, 38 };
+    bool held[ MIDI_NOTES ] = { false };
+
+    if ( IsKeyPressed( KEY_F1 ) )
+    { help = !help; }
+
+    if ( IsKeyPressed( KEY_ESCAPE ) )
+    {
+      if ( help )
+      { help = false; }
+      else
+      { quit = true; }
     }
-    if (IsAudioDeviceReady())
-        CloseAudioDevice();
-    UnloadFont(font);
-    CloseWindow();
-    return 0;
+
+    int mouse_key = computer_view ? computer_hit( GetMousePosition(), keys ) : KEY_NULL;
+    bool focused = IsWindowFocused() && !IsWindowMinimized() && !help;
+    if ( focused )
+    {
+      if ( IsKeyPressed( KEY_F2 ) || ( IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) &&
+                                 CheckCollisionPointRec( GetMousePosition(), view_button )))
+      {
+        computer_view = !computer_view;
+        synth_silence( &synth );
+        blocked = true;
+        mouse_key = computer_view ? computer_hit( GetMousePosition(), keys ) : KEY_NULL;
+      }
+
+      bool filter_click = IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) &&
+                          CheckCollisionPointRec( GetMousePosition(), filter_button );
+
+      if ( filter_click || control_pressed( KEY_TAB, mouse_key ))
+      { synth_set_tone(&synth, (Tone)((synth.tone + 1) % TONE_COUNT)); }
+
+      int old_base = base;
+
+      if ( IsKeyPressed( KEY_LEFT ) && base > 24 )
+      { base -= 12; }
+
+      if ( IsKeyPressed( KEY_RIGHT ) && base < 84 )
+      { base += 12; }
+
+      if ( old_base != base )
+      { synth_silence( &synth ); }
+
+      if ( control_pressed( KEY_MINUS, mouse_key ))
+      { synth.volume = fmaxf( 0, synth.volume - .05f ); }
+
+      if ( control_pressed( KEY_EQUAL, mouse_key ))
+      { synth.volume = fminf( 1, synth.volume + .05f ); }
+
+      read_note_keys( held, base, computer_view );
+      sustain = IsKeyDown( KEY_SPACE );
+
+      if ( IsMouseButtonDown( MOUSE_BUTTON_LEFT ))
+      {
+        Vector2 mouse = GetMousePosition();
+        int note = computer_view ? computer_note( mouse_key, base ) : -1;
+
+        if ( !computer_view )
+        {
+          int index = keyboard_hit( mouse.x, mouse.y, keys );
+
+          if ( index >= 0 )
+          { note = base + index; }
+        }
+
+        if ( note >= 0 )
+        { held[ note ] = true; }
+
+        if ( mouse_key == KEY_SPACE )
+        { sustain = true; }
+      }
+    }
+    else
+    {
+      blocked = true;
+      synth_silence( &synth );
+      sustain = false;
+    }
+    // Panic/focus loss suppresses existing holds until all playing controls are
+    // released.
+    if ( focused && control_pressed( KEY_BACKSPACE, mouse_key ))
+    {
+      blocked = true;
+      synth_silence( &synth );
+    }
+
+    if ( blocked )
+    {
+      bool any = IsKeyDown( KEY_SPACE ) || IsMouseButtonDown( MOUSE_BUTTON_LEFT );
+      bool physical[ MIDI_NOTES ] = { false };
+      read_note_keys( physical, base, computer_view );
+
+      for ( int note = 0; note < MIDI_NOTES; ++note )
+      { any = any || physical[note]; }
+
+      if ( !any )
+      { blocked = false; }
+
+      memset( held, 0, sizeof( held ));
+      sustain = false;
+    }
+
+    synth_notes( &synth, held, sustain );
+
+    if ( audio_ready )
+    {
+      while ( IsAudioStreamProcessed( stream ))
+      {
+        synth_render( &synth, samples, AUDIO_FRAMES );
+        UpdateAudioStream( stream, samples, AUDIO_FRAMES );
+      }
+    }
+    else
+    { synth_render( &synth, samples, AUDIO_FRAMES ); }
+
+    BeginDrawing();
+    ClearBackground( background );
+    text( "alt-synth", margin, 22, 36, accent );
+    text( "POLYPHONIC KEYBOARD", margin + 290, 34, 17, muted );
+    char status[ 100 ], first[ 8 ], last[ 8 ];
+    note_name( base + ( computer_view ? QWERTY_MIN_OFFSET : 0 ), first, sizeof( first ));
+    note_name( base + ( computer_view ? QWERTY_MAX_OFFSET : KEY_COUNT - 1 ), last, sizeof( last ));
+    snprintf( status, sizeof( status ), "%s-%s  VOL %d%%  SUSTAIN %s", first, last,
+             ( int )lroundf( synth.volume * 100 ), sustain ? "ON" : "OFF" );
+    text( status, margin, 80, 22, text_color );
+
+    if ( !audio_ready )
+    { text("AUDIO UNAVAILABLE", width - 345, 32, 20, accent); }
+    else
+    { text("F1 HELP", width - 155, 32, 20, muted); }
+
+    char filter_label[ 64 ];
+    snprintf( filter_label, sizeof( filter_label ), "FILTER: %s", tone_name( synth.tone ));
+    draw_button( filter_button, filter_label, 20, true, !help );
+    draw_wave( ( Rectangle ){ margin, graph_y, graph_width, graph_height }, samples );
+    draw_pitches( ( Rectangle ){ margin + graph_width + gap, graph_y, graph_width, graph_height }, &synth );
+    panel( keyboard_panel, computer_view ? "LIGHTER = NATURAL NOTES / DARKER = SHARPS"
+                                        : "HOLD KEYS TO PLAY / SPACE TO SUSTAIN" );
+    draw_button( view_button, computer_view ? "F2: QWERTY VIEW" : "F2: PIANO VIEW", 16, false, !help );
+
+    if ( computer_view )
+    { draw_computer_keyboard(keys, base, held, &synth, sustain, mouse_key, focused && !blocked); }
+    else
+    { draw_keyboard(keys, base, held, &synth); }
+
+    text("ARROWS octave   -/= volume   BACKSPACE silence   ESC quit", margin, height - 29, 18, muted);
+
+    if ( help )
+    { draw_help(width, height); }
+
+    EndDrawing();
+  }
+  if ( audio_ready )
+  {
+    StopAudioStream( stream );
+    UnloadAudioStream( stream );
+  }
+  if ( IsAudioDeviceReady() )
+  { CloseAudioDevice(); }
+
+  UnloadFont( font );
+  CloseWindow();
+
+  return 0;
 }
