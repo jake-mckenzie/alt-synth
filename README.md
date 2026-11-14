@@ -49,6 +49,9 @@ cmake --install .deps/raylib-build
 
 ## Controls
 
+For playable examples and a note-to-key reference, see the
+[classic game music guide](docs/playing-guide.md).
+
 | Control | Action |
 | --- | --- |
 | `A S D F G H J K L ; '` | White notes |
