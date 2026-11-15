@@ -1,5 +1,5 @@
 #include "../bin/font_data.h"
-#include "../.deps/raylib/include/raylib.h"
+#include <raylib.h>
 #include "synth.h"
 
 #include <math.h>
@@ -33,17 +33,18 @@ static const Color muted = { 147, 154, 160, 255 };
 static const Color accent = { 255, 182, 77, 255 };
 static const Color signal_color = { 120, 218, 191, 255 };
 static Font font;
+static float text_growth = 1;
 
 // Draw a UI label with the shared font size scale and character spacing.
 static void text( const char *label, float x, float y, float size, Color color )
 {
-  DrawTextEx( font, label, ( Vector2 ){ x, y }, size * TEXT_SCALE, 1, color );
+  DrawTextEx( font, label, ( Vector2 ){ x, y }, size * TEXT_SCALE * text_growth, text_growth, color );
 }
 
 // Center text using the same measured font metrics as the label renderer.
 static void centered( const char *label, Rectangle bounds, float size, Color color )
 {
-  Vector2 extent = MeasureTextEx( font, label, size * TEXT_SCALE, 1 );
+  Vector2 extent = MeasureTextEx( font, label, size * TEXT_SCALE * text_growth, text_growth );
   text( label, bounds.x + ( bounds.width - extent.x ) / 2, 
        bounds.y + ( bounds.height - extent.y ) / 2, size, color );
 }
@@ -104,10 +105,10 @@ static void draw_keyboard( KeyRect bounds, int base, const bool held[ MIDI_NOTES
       if ( black )
       { DrawRectangle(( int )( r.x + 4 ), ( int )( r.y + 4 ), ( int )( r.width - 8 ), 3, Fade( WHITE, .12f )); }
 
-      centered( bindings[ i ].label, ( Rectangle ){ r.x, r.y + r.height - 64, r.width, 26 }, 20, ink );
+      centered( bindings[ i ].label, ( Rectangle ){ r.x, r.y + r.height - 64 * text_growth, r.width, 26 * text_growth }, 24, ink );
       char name[ 8 ];
       note_name( note, name, sizeof( name ));
-      centered( name, ( Rectangle ){ r.x, r.y + r.height - 33, r.width, 22 }, 14, Fade( ink, .7f ));
+      centered( name, ( Rectangle ){ r.x, r.y + r.height - 33 * text_growth, r.width, 22 * text_growth }, 16, Fade( ink, .7f ));
 
       if ( held[ note ] )
       { DrawRectangle((int)(r.x + 5), (int)(r.y + r.height - 6), (int)(r.width - 10), 3, ink); }
@@ -257,8 +258,11 @@ static Rectangle computer_key_rect( KeyRect bounds, int row, float offset, float
   float unit = bounds.width / 15;
   float row_height = bounds.height / QWERTY_ROWS;
 
-  return ( Rectangle ){ bounds.x + offset * unit + 2, bounds.y + row * row_height + 2,
-    units * unit - 4, row_height - 4 };
+  return ( Rectangle )
+  {
+    bounds.x + offset * unit + 2, bounds.y + row * row_height + 2,
+    units * unit - 4, row_height - 4
+  };
 }
 
 // Return the physical key under the mouse, or KEY_NULL outside keycaps.
@@ -321,14 +325,14 @@ static void draw_computer_keyboard( KeyRect bounds, int base, const bool held[ M
 
       if ( note >= 0 )
       {
-        centered( key.label, ( Rectangle ){ r.x, r.y, r.width, r.height * .55f }, 16, ink );
+        centered( key.label, ( Rectangle ){ r.x, r.y, r.width, r.height * .55f }, 20, ink );
         char name[ 8 ];
         note_name( note, name, sizeof( name ));
         centered( name, ( Rectangle ){ r.x, r.y + r.height * .55f, r.width, r.height * .45f },
-                 11, ink );
+                 14, ink );
       }
       else
-      { centered( key.label, r, 14, ink ); }
+      { centered( key.label, r, 18, ink ); }
     }
   }
 }
@@ -337,7 +341,7 @@ static void draw_computer_keyboard( KeyRect bounds, int base, const bool held[ M
 static void draw_wave( Rectangle r, const float *samples )
 {
   panel( r, "OUTPUT / WAVEFORM" );
-  Rectangle plot = { r.x + 20, r.y + 52, r.width - 40, r.height - 80 };
+  Rectangle plot = { r.x + 20, r.y + 52 * text_growth, r.width - 40, r.height - 80 * text_growth };
 
   for ( int i = 0; i <= 4; ++i )
   {
@@ -354,15 +358,15 @@ static void draw_wave( Rectangle r, const float *samples )
     DrawLineEx( a, b, 1.5f, signal_color );
   }
 
-  text( "0 ms", plot.x, r.y + r.height - 24, 13, muted );
-  text( "23.2 ms", plot.x + plot.width - 100, r.y + r.height - 24, 13, muted );
+  text( "0 ms", plot.x, r.y + r.height - 24 * text_growth, 15, muted );
+  text( "23.2 ms", plot.x + plot.width - 100 * text_growth, r.y + r.height - 24 * text_growth, 15, muted );
 }
 
 // Display voice gate envelopes on a MIDI axis that includes all sounding notes; not an FFT.
 static void draw_pitches( Rectangle r, const Synth *synth )
 {
   panel( r, "VOICES / PITCH LEVELS" );
-  Rectangle plot = { r.x + 24, r.y + 52, r.width - 48, r.height - 80 };
+  Rectangle plot = { r.x + 24, r.y + 52 * text_growth, r.width - 48, r.height - 80 * text_growth };
   float bottom = plot.y + plot.height;
   DrawLineEx( ( Vector2 ){ plot.x, bottom }, ( Vector2 ){ plot.x + plot.width, bottom}, 1, border );
   // Keep the usual pitch axis unless an extended QWERTY note falls outside it.
@@ -389,7 +393,7 @@ static void draw_pitches( Rectangle r, const Synth *synth )
       DrawLineEx(( Vector2 ){ x, plot.y }, ( Vector2 ){ x, bottom }, 1, border );
       char label[ 8 ];
       note_name( note, label, sizeof( label ));
-      text( label, x - 9, bottom + 6, 12, muted );
+      text( label, x - 9, bottom + 6, 14, muted );
     }
 
     if ( synth->level[ note ] < .001f)
@@ -404,8 +408,8 @@ static void draw_pitches( Rectangle r, const Synth *synth )
 // Draw one aligned control binding and its action in the help overlay.
 static void help_row( float x, float y, const char *keys, const char *action )
 {
-  text( keys, x, y, 16, accent );
-  text( action, x + 150, y, 16, text_color );
+  text( keys, x, y, 18, accent );
+  text( action, x + 150, y, 18, text_color );
 }
 
 // Draw the key mapping and grouped controls over a dimmed application view.
@@ -416,14 +420,14 @@ static void draw_help( int width, int height )
   Rectangle box = { ( width - box_width ) / 2, ( height - 536 ) / 2.0f, box_width, 536 };
   panel( box, "alt-synth / keyboard help" );
   float left = box.x + 24;
-  text( "Hold notes for chords. Release keys to stop.", left, box.y + 56, 16, text_color );
+  text( "Hold notes for chords. Release keys to stop.", left, box.y + 56, 18, text_color );
 
   // Keycaps follow the piano's staggered layout, using the same labels as the keys.
-  float key_start = left + 136;
-  float unit = ( box.width - 48 - 136 ) / WHITE_KEY_COUNT;
+  float key_start = left + 160;
+  float unit = ( box.width - 48 - 160 ) / WHITE_KEY_COUNT;
   int whites = 0;
-  text( "BLACK KEYS", left, box.y + 112, 14, muted );
-  text( "WHITE KEYS", left, box.y + 158, 14, muted );
+  text( "BLACK KEYS", left, box.y + 112, 18, muted );
+  text( "WHITE KEYS", left, box.y + 158, 18, muted );
 
   for ( int i = 0; i < KEY_COUNT; ++i )
   {
@@ -443,14 +447,14 @@ static void draw_help( int width, int height )
     Rectangle cap = { x, y, cap_width, 38 };
     DrawRectangleRounded( cap, .15f, 6, black ? background : border );
     DrawRectangleRoundedLinesEx( cap, .15f, 6, 1, black ? border : muted );
-    centered( bindings[ i ].label, cap, 17, black ? accent : text_color );
+    centered( bindings[ i ].label, cap, 20, black ? accent : text_color );
   }
 
   float divider_y = box.y + 210;
   DrawLineEx( ( Vector2 ){ left, divider_y }, ( Vector2 ){ box.x + box.width - 24, divider_y }, 1, border );
   float right = box.x + box.width / 2 + 16;
-  text( "PLAYING", left, box.y + 232, 14, muted );
-  text( "CONTROLS", right, box.y + 232, 14, muted );
+  text( "PLAYING", left, box.y + 232, 18, muted );
+  text( "CONTROLS", right, box.y + 232, 18, muted );
   help_row( left, box.y + 274, "Mouse", "Hold / drag notes" );
   help_row( left, box.y + 316, "Space", "Hold sustain" );
   help_row( left, box.y + 358, "Left/Right", "Shift octave" );
@@ -460,8 +464,8 @@ static void draw_help( int width, int height )
   help_row( right, box.y + 358, "F1", "Toggle help" );
   help_row( right, box.y + 400, "Esc", "Close help" );
 
-  text( "QWERTY adds more notes. Caps Lock is unused.", left, box.y + 478, 14, muted );
-  text( "F2 switches views. Esc quits outside help.", left, box.y + 502, 14, muted );
+  text( "QWERTY adds more notes. Caps Lock is unused.", left, box.y + 478, 18, muted );
+  text( "F2 switches views. Esc quits outside help.", left, box.y + 502, 18, muted );
 }
 
 // Print command-line help or manage the window, input, audio stream, and rendering loop.
@@ -539,15 +543,22 @@ int main( int argc, char **argv )
   while ( !quit && !WindowShouldClose() )
   {
     int width = GetScreenWidth(), height = GetScreenHeight();
+    text_growth = fminf( 1.6f, sqrtf( fmaxf( 1, height / 760.0f ) ));
     float margin = 24, gap = 16;
     float keyboard_height = fminf( 260, height * .36f );
-    KeyRect keys = { margin + 16, height - keyboard_height - 48, width - 2 * ( margin + 16 ),
+    // Give the keyboard half of the extra vertical space in taller windows.
+    keyboard_height += fmaxf( 0, height - 760 ) * .5f;
+    if ( computer_view )
+    { keyboard_height *= 1.125f; }
+    KeyRect keys = { margin + 16, height - keyboard_height - 48 * text_growth, width - 2 * ( margin + 16 ),
                     keyboard_height };
-    Rectangle keyboard_panel = { margin, keys.y - 56, width - 2 * margin, keyboard_height + 72 };
-    float graph_y = 128, graph_height = keyboard_panel.y - graph_y - gap;
+    Rectangle keyboard_panel = { margin, keys.y - 56 * text_growth, width - 2 * margin, keyboard_height + 72 * text_growth };
+    float graph_y = 128 * text_growth, graph_height = keyboard_panel.y - graph_y - gap;
     float graph_width = ( width - 2 * margin - gap ) / 2;
-    Rectangle filter_button = { width - 360, 73, 336, 42 };
-    Rectangle view_button = { width - 298, keyboard_panel.y + 8, 250, 38 };
+    Rectangle filter_button = { width - margin - 336 * text_growth, 73 * text_growth,
+                                336 * text_growth, 42 * text_growth };
+    Rectangle view_button = { width - 48 - 250 * text_growth, keyboard_panel.y + 8 * text_growth,
+                              250 * text_growth, 38 * text_growth };
     bool held[ MIDI_NOTES ] = { false };
 
     if ( IsKeyPressed( KEY_F1 ) )
@@ -666,18 +677,18 @@ int main( int argc, char **argv )
     BeginDrawing();
     ClearBackground( background );
     text( "alt-synth", margin, 22, 36, accent );
-    text( "POLYPHONIC KEYBOARD", margin + 290, 34, 17, muted );
+    text( "POLYPHONIC KEYBOARD", margin + 290 * text_growth, 34 * text_growth, 17, muted );
     char status[ 100 ], first[ 8 ], last[ 8 ];
     note_name( base + ( computer_view ? QWERTY_MIN_OFFSET : 0 ), first, sizeof( first ));
     note_name( base + ( computer_view ? QWERTY_MAX_OFFSET : KEY_COUNT - 1 ), last, sizeof( last ));
     snprintf( status, sizeof( status ), "%s-%s  VOL %d%%  SUSTAIN %s", first, last,
              ( int )lroundf( synth.volume * 100 ), sustain ? "ON" : "OFF" );
-    text( status, margin, 80, 22, text_color );
+    text( status, margin, 80 * text_growth, 22, text_color );
 
     if ( !audio_ready )
-    { text("AUDIO UNAVAILABLE", width - 345, 32, 20, accent); }
+    { text("AUDIO UNAVAILABLE", width - 345 * text_growth, 32 * text_growth, 20, accent); }
     else
-    { text("F1 HELP", width - 155, 32, 20, muted); }
+    { text("F1 HELP", width - 155 * text_growth, 32 * text_growth, 20, muted); }
 
     char filter_label[ 64 ];
     snprintf( filter_label, sizeof( filter_label ), "FILTER: %s", tone_name( synth.tone ));
@@ -693,10 +704,19 @@ int main( int argc, char **argv )
     else
     { draw_keyboard(keys, base, held, &synth); }
 
-    text("ARROWS octave   -/= volume   BACKSPACE silence   ESC quit", margin, height - 29, 18, muted);
+    text("ARROWS octave   -/= volume   BACKSPACE silence   ESC quit", margin, height - 29 * text_growth, 18, muted);
 
     if ( help )
-    { draw_help(width, height); }
+    {
+      // Scale the help panel and its spacing together with its text.
+      float growth = text_growth;
+      Camera2D camera = { .zoom = growth };
+      BeginMode2D( camera );
+      text_growth = 1;
+      draw_help( ( int )( width / growth ), ( int )( height / growth ));
+      text_growth = growth;
+      EndMode2D();
+    }
 
     EndDrawing();
   }
