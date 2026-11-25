@@ -60,10 +60,10 @@ For playable examples and a note-to-key reference, see the
 | `Space` | Hold sustain |
 | `←` / `→` | Shift octave |
 | `-` / `=` | Adjust volume |
-| Filter button / `Tab` | Cycle sounds |
+| Tone button / `F3` / `Tab` | Cycle sounds |
 | View button / `F2` | Switch piano / QWERTY display |
 | `Backspace` | Silence notes |
-| `F1` | Toggle help |
+| Help button / `F1` | Toggle help |
 | `Esc` | Close help, or quit |
 
 Starts in **QWERTY view** (C#2–A#6) with **Chiptune** selected. Press **F2**

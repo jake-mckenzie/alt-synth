@@ -70,13 +70,12 @@ static void panel( Rectangle r, const char *title )
 }
 
 // Draw a rounded action button with a hover state when interaction is enabled.
-static void draw_button( Rectangle bounds, const char *label, float size,
-                        bool primary, bool enabled )
+static void draw_button( Rectangle bounds, const char *label, bool enabled )
 {
   bool hover = enabled && CheckCollisionPointRec( GetMousePosition(), bounds );
-  DrawRectangleRounded( bounds, .15f, 6, hover ? border : ( primary ? panel_color : background ));
-  DrawRectangleRoundedLinesEx( bounds, .15f, 6, 1, primary ? accent : muted );
-  centered( label, bounds, size, primary ? accent : text_color );
+  DrawRectangleRounded( bounds, .15f, 6, hover ? border : panel_color);
+  DrawRectangleRoundedLinesEx( bounds, .15f, 6, 1, muted );
+  centered( label, bounds, 17, text_color );
 }
 
 // reserve room for the graph title and axis labels, including in short windows
@@ -214,7 +213,7 @@ static void draw_help( float width, float height )
   help_row( left, box.y + 316, "Space", "Hold sustain" );
   help_row( left, box.y + 358, "Left/Right", "Shift octave" );
   help_row( left, box.y + 400, "- / =", "Adjust volume" );
-  help_row( right, box.y + 274, "Tab/Filter", "Cycle sounds" );
+  help_row( right, box.y + 274, "F3 / Tab", "Cycle tones" );
   help_row( right, box.y + 316, "Backspace", "Silence notes" );
   help_row( right, box.y + 358, "F1", "Toggle help" );
   help_row( right, box.y + 400, "Esc", "Close help" );
@@ -254,38 +253,37 @@ UiLayout ui_layout( void )
   float keyboard_bottom = height - 24 + 4 * compact;
   KeyRect keys = { MARGIN + 16, keyboard_bottom - keyboard_height,
                   width - 2 * ( MARGIN + 16 ), keyboard_height };
-  Rectangle filter_button = { width - MARGIN - 270, 73, 270, 42 };
-  Rectangle view_button = { filter_button.x - GAP - 200, filter_button.y, 200, filter_button.height };
+  Rectangle tone_button = { width - MARGIN - 176, 23, 176, 42 };
+  Rectangle view_button = tone_button;
+  view_button.x -= tone_button.width + GAP;
+  Rectangle help_button = view_button;
+  help_button.x -= view_button.width + GAP;
 
-  return ( UiLayout ){ width, height, scale, compact, keys, filter_button, view_button };
+  return ( UiLayout ){ width, height, scale, compact, keys, help_button, view_button, tone_button };
 }
 
 // draw the title, status, controls, and shortcut hints
 static void draw_header( const UiLayout *layout, const UiFrame *frame, const Synth *synth )
 {
   text( "alt-synth", MARGIN, 22, 36, accent );
-  text( "POLYPHONIC KEYBOARD", MARGIN + 290, 34, 17, muted );
   char status[ 100 ], first[ 8 ], last[ 8 ];
   note_name( frame->base + ( frame->computer_view ? QWERTY_MIN_OFFSET : 0 ), first, sizeof( first ));
   note_name( frame->base + ( frame->computer_view ? QWERTY_MAX_OFFSET : KEY_COUNT - 1 ), last, sizeof( last ));
   snprintf( status, sizeof( status ), "%s-%s  VOL %d%%  SUSTAIN %s", first, last,
            ( int )lroundf( synth->volume * 100 ), frame->sustain ? "ON" : "OFF" );
-  float status_size = 22;
-  float status_width = measure_text( status, status_size ).x;
-  float status_available = layout->view_button.x - MARGIN - GAP;
-  if ( status_width > status_available )
-  { status_size *= status_available / status_width; }
-  text( status, MARGIN, 80, status_size, text_color );
+  text( status, MARGIN, 80, 22, text_color );
 
   if ( !frame->audio_ready )
-  { text( "AUDIO UNAVAILABLE", layout->width - 345, 32, 20, accent ); }
-  else
-  { text( "F1 HELP", layout->width - 155, 32, 20, muted ); }
+  {
+    const char *warning = "AUDIO UNAVAILABLE";
+    float warning_x = layout->width - MARGIN - measure_text( warning, 17 ).x;
+    text( warning, warning_x, 82, 17, accent );
+  }
 
-  char filter_label[ 64 ];
-  snprintf( filter_label, sizeof( filter_label ), "FILTER: %s", tone_name( synth->tone ));
-  draw_button( layout->filter_button, filter_label, 20, true, !frame->help );
-  draw_button( layout->view_button, frame->computer_view ? "F2: QWERTY VIEW" : "F2: PIANO VIEW", 16, false, !frame->help );
+  char tone_label[ 64 ];
+  snprintf( tone_label, sizeof( tone_label ), "F3: %s", tone_name( synth->tone ));
+  draw_button( layout->view_button, frame->computer_view ? "F2: QWERTY" : "F2: PIANO", !frame->help );
+  draw_button( layout->tone_button, tone_label, !frame->help );
 
   draw_shortcuts( MARGIN, 120 );
 }
@@ -295,7 +293,7 @@ void ui_draw( const UiLayout *layout, const UiFrame *frame, const Synth *synth,
               const float *samples, size_t sample_count )
 {
   KeyRect keys = layout->keys;
-  float keyboard_header = frame->computer_view ? 16 : 56 - 8 * layout->compact;
+  float keyboard_header = 56 - 8 * layout->compact;
   Rectangle keyboard_panel = { MARGIN, keys.y - keyboard_header, layout->width - 2 * MARGIN,
                                keys.height + keyboard_header + 16 };
   float graph_y = 152 - 8 * layout->compact;
@@ -322,6 +320,8 @@ void ui_draw( const UiLayout *layout, const UiFrame *frame, const Synth *synth,
   if ( frame->help )
   { draw_help( layout->width, layout->height ); }
 
+  draw_button( layout->help_button, frame->help ? "F1: CLOSE HELP" : "F1: HELP", true );
+
   EndMode2D();
   EndDrawing();
 }
@@ -343,7 +343,7 @@ void ui_print_help( void )
   }
 
   puts( "Space sustain | arrows octave | -/= volume | Backspace silence | "
-       "Tab filter | F2 keyboard view | F1 help | Esc quit\n"
+       "F1 help | F2 keyboard view | F3/Tab tone | Esc quit\n"
        "QWERTY view: extra keys play notes; Caps Lock is unused. Click controls to use "
        "them." );
 }

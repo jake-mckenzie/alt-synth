@@ -4,10 +4,17 @@
 #include <math.h>
 #include <string.h>
 
-// toggle help and handle Escape before deciding whether playing is enabled
-static void update_window_shortcuts( InputState *input )
+// activate a header button through its keyboard shortcut or a left click
+static bool button_pressed( int key, Rectangle bounds )
 {
-  if ( IsKeyPressed( KEY_F1 ) )
+  return IsKeyPressed( key ) || ( IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) &&
+                                CheckCollisionPointRec( GetMousePosition(), bounds ));
+}
+
+// toggle help and handle Escape before deciding whether playing is enabled
+static void update_window_shortcuts( InputState *input, const UiLayout *layout )
+{
+  if ( button_pressed( KEY_F1, layout->help_button ) )
   { input->help = !input->help; }
 
   if ( IsKeyPressed( KEY_ESCAPE ) )
@@ -23,8 +30,7 @@ static void update_window_shortcuts( InputState *input )
 static int update_playing_controls( InputState *input, const UiLayout *layout,
                                     Synth *synth, int mouse_key )
 {
-  if ( IsKeyPressed( KEY_F2 ) || ( IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) &&
-                             CheckCollisionPointRec( GetMousePosition(), layout->view_button )))
+  if ( button_pressed( KEY_F2, layout->view_button ) )
   {
     input->computer_view = !input->computer_view;
     synth_silence( synth );
@@ -32,10 +38,7 @@ static int update_playing_controls( InputState *input, const UiLayout *layout,
     mouse_key = input->computer_view ? computer_hit( GetMousePosition(), layout->keys ) : KEY_NULL;
   }
 
-  bool filter_click = IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) &&
-                      CheckCollisionPointRec( GetMousePosition(), layout->filter_button );
-
-  if ( filter_click || control_pressed( KEY_TAB, mouse_key ))
+  if ( button_pressed( KEY_F3, layout->tone_button ) || control_pressed( KEY_TAB, mouse_key ))
   { synth_set_tone( synth, ( Tone )( ( synth->tone + 1 ) % TONE_COUNT )); }
 
   bool octave_down = IsKeyPressed( KEY_LEFT );
@@ -79,7 +82,7 @@ UiFrame input_update( InputState *input, const UiLayout *layout, Synth *synth,
                       bool held[ MIDI_NOTES ] )
 {
   bool sustain = false;
-  update_window_shortcuts( input );
+  update_window_shortcuts( input, layout );
 
   int mouse_key = input->computer_view ? computer_hit( GetMousePosition(), layout->keys ) : KEY_NULL;
   bool focused = IsWindowFocused() && !IsWindowMinimized() && !input->help;

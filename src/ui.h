@@ -13,7 +13,7 @@ typedef struct
 {
   float width, height, scale, compact;
   KeyRect keys;
-  Rectangle filter_button, view_button;
+  Rectangle help_button, view_button, tone_button;
 } UiLayout;
 
 // current input and display state for a single rendered frame
