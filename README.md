@@ -40,6 +40,23 @@ tar -xzf ~/Downloads/raylib-5.5_linux_amd64.tar.gz -C .deps/raylib --strip-compo
 
 </details>
 
+<details>
+<summary>Build on macOS or Windows</summary>
+
+Download the matching [Raylib 5.5 archive](https://github.com/raysan5/raylib/releases/tag/5.5).
+Extract its contents into `.deps/raylib` so that `include/raylib.h` and
+`lib/libraylib.a` are directly below it.
+
+| Target | Toolchain | Raylib archive | Build |
+| --- | --- | --- | --- |
+| macOS Apple Silicon | Apple Clang | `raylib-5.5_macos.tar.gz` | `./build.sh` |
+| Windows x64 | GCC in the MSYS2 MINGW64 shell | `raylib-5.5_win64_mingw-w64.zip` | `CC=gcc ./build.sh` |
+
+The binaries are `bin/alt-synth` on macOS and `bin/alt-synth.exe` on Windows.
+Automated macOS and Windows builds are paused pending release signing.
+
+</details>
+
 ## Play
 
 Alt-synth opens in QWERTY view with the Chiptune tone.

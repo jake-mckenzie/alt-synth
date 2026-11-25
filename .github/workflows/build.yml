@@ -1,0 +1,90 @@
+# Keep this workflow uncalled until macOS and Windows release signing is ready.
+name: Build desktop packages
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        default: v0.0.0
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux_x86_64
+            runner: ubuntu-22.04
+            cc: cc
+            shell: bash
+          - platform: macos_arm64
+            runner: macos-15
+            cc: clang
+            shell: bash
+          - platform: windows_x86_64
+            runner: windows-2025
+            cc: gcc
+            shell: msys2 {0}
+    runs-on: ${{ matrix.runner }}
+    env:
+      CC: ${{ matrix.cc }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up MinGW-w64
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          # Match the C runtime used by the pinned MinGW-w64 archive.
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc zip
+
+      - name: Set up Raylib
+        uses: ./.github/actions/setup-raylib
+
+      - name: Test C core
+        shell: ${{ matrix.shell }}
+        env:
+          CFLAGS: ${{ runner.os == 'Linux' && '-O1 -g -fsanitize=address,undefined' || '-O2' }}
+        run: ./test.sh
+
+      - name: Build and check command-line help
+        shell: ${{ matrix.shell }}
+        env:
+          CFLAGS: -O2 -Werror
+        run: |
+          set -eu
+          sh -n build.sh
+          sh -n test.sh
+          sh -n scripts/package-release.sh
+          ./build.sh
+          if [ "${RUNNER_OS}" = Windows ]; then
+            ./bin/alt-synth.exe --help
+            objdump -p bin/alt-synth.exe > bin/imports.txt
+            if grep -Ei 'DLL Name: (libgcc_s[^ ]*|libwinpthread[^ ]*|msys-2\.0|raylib)\.dll' bin/imports.txt; then
+              echo 'Unexpected non-system runtime dependency' >&2
+              exit 1
+            fi
+          else
+            ./bin/alt-synth --help
+          fi
+
+      - name: Package app
+        shell: ${{ matrix.shell }}
+        env:
+          VERSION: ${{ inputs.version }}
+          PLATFORM: ${{ matrix.platform }}
+        run: ./scripts/package-release.sh "$VERSION" "$PLATFORM"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: alt-synth-${{ matrix.platform }}
+          path: dist/alt-synth_*
+          if-no-files-found: error
