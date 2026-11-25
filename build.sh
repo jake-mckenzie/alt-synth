@@ -24,5 +24,5 @@ mkdir -p bin
 # Flag variables intentionally split into compiler arguments.
 # shellcheck disable=SC2086
 "$CC" -std=c11 -Wall -Wextra -Wpedantic $CFLAGS ${CPPFLAGS:-} $RAYLIB_CFLAGS -Ibin \
-    src/main.c src/keyboard.c src/synth.c -o bin/alt-synth ${LDFLAGS:-} $RAYLIB_LIBS -lm
+    src/main.c src/input.c src/ui.c src/keyboard.c src/keyboard_layout.c src/synth.c -o bin/alt-synth ${LDFLAGS:-} $RAYLIB_LIBS -lm
 printf 'Built bin/alt-synth\n'

@@ -1,5 +1,5 @@
 #include "keyboard.h"
-#include "ui_style.h"
+#include "ui.h"
 
 // pair each piano note's physical key with its display label
 typedef struct
@@ -157,6 +157,16 @@ static const ComputerKey computer_rows[ QWERTY_ROWS ][ QWERTY_COLUMNS ] =
   }
 };
 
+// resolve a QWERTY position to a playable MIDI note, or return -1
+static int computer_note_at( int row, int column, int base )
+{
+  int offset = qwerty_note_offset( row, column );
+  if ( offset == NO_NOTE || base < -offset || base >= MIDI_NOTES - offset )
+  { return -1; }
+
+  return base + offset;
+}
+
 // Resolve a QWERTY key to a MIDI note, or return -1 for a non-playing key.
 int computer_note( int code, int base )
 {
@@ -167,13 +177,7 @@ int computer_note( int code, int base )
       if ( computer_rows[ row ][ i ].code != code )
       { continue; }
 
-      int offset = qwerty_note_offset( row, i );
-
-      if ( offset == NO_NOTE )
-      { return -1; }
-
-      int note = base + offset;
-      return note >= 0 && note < MIDI_NOTES ? note : -1;
+      return computer_note_at( row, i, base );
     }
   }
   return -1;
@@ -185,7 +189,10 @@ void read_note_keys( bool held[ MIDI_NOTES ], int base, bool computer_view )
   if ( !computer_view )
   {
     for ( int i = 0; i < KEY_COUNT; ++i )
-    { held[ base + i ] = IsKeyDown( bindings[ i ].code ); }
+    {
+      if ( base >= -i && base < MIDI_NOTES - i )
+      { held[ base + i ] = IsKeyDown( bindings[ i ].code ); }
+    }
 
     return;
   }
@@ -194,10 +201,9 @@ void read_note_keys( bool held[ MIDI_NOTES ], int base, bool computer_view )
   {
     for ( int i = 0; i < QWERTY_COLUMNS && computer_rows[ row ][ i ].label; ++i )
     {
-      int offset = qwerty_note_offset( row, i );
-
-      if ( offset != NO_NOTE )
-      { held[ base + offset ] = IsKeyDown( computer_rows[ row ][ i ].code ); }
+      int note = computer_note_at( row, i, base );
+      if ( note >= 0 )
+      { held[ note ] = IsKeyDown( computer_rows[ row ][ i ].code ); }
     }
   }
 }
@@ -252,7 +258,7 @@ void draw_computer_keyboard( KeyRect bounds, int base, const bool held[ MIDI_NOT
       ComputerKey key = computer_rows[ row ][ i ];
       Rectangle r = computer_key_rect( bounds, row, offset, key.units );
       offset += key.units;
-      int note = computer_note( key.code, base );
+      int note = computer_note_at( row, i, base );
       bool enabled = key.code != KEY_CAPS_LOCK;
       bool pressed = note >= 0 ? held[ note ] : enabled && input_enabled &&
                           ( IsKeyDown( key.code ) ||

@@ -1,7 +1,7 @@
 #ifndef ALT_SYNTH_KEYBOARD_H
 #define ALT_SYNTH_KEYBOARD_H
 
-#include "synth.h"
+#include "keyboard_layout.h"
 
 #include <raylib.h>
 

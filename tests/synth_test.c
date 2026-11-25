@@ -1,3 +1,4 @@
+#include "../src/keyboard_layout.h"
 #include "../src/synth.h"
 
 #include <assert.h>
