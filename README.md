@@ -2,7 +2,7 @@
 
 A desktop synth you can play with your keyboard or mouse.
 
-[Download for Linux x86-64](https://github.com/jake-mckenzie/alt-synth/releases)
+[Download the Linux x86-64 beta](https://github.com/jake-mckenzie/alt-synth/releases/tag/v0.3.1-beta.1)
 
 <details>
 <summary>Screenshots</summary>
