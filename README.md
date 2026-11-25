@@ -59,7 +59,7 @@ Automated macOS and Windows builds are paused pending release signing.
 
 ## Play
 
-Alt-synth opens in QWERTY view with the Chiptune tone.
+alt-synth opens in QWERTY view with the Chiptune tone.
 
 | Key | Action |
 | --- | --- |

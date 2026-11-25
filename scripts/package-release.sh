@@ -36,7 +36,7 @@ case "$platform" in
         (cd "$stage" && zip -q -r "$archive.zip" alt-synth)
         ;;
     macos_arm64)
-        app="$package/Alt-Synth.app/Contents"
+        app="$package/alt-synth.app/Contents"
         mkdir -p "$app/MacOS"
         cp bin/alt-synth "$app/MacOS/"
         cat > "$app/Info.plist" <<PLIST
@@ -46,7 +46,7 @@ case "$platform" in
 <dict>
     <key>CFBundleExecutable</key><string>alt-synth</string>
     <key>CFBundleIdentifier</key><string>com.github.jake-mckenzie.alt-synth</string>
-    <key>CFBundleName</key><string>Alt-Synth</string>
+    <key>CFBundleName</key><string>alt-synth</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>${version#v}</string>
     <key>CFBundleVersion</key><string>${version#v}</string>
