@@ -11,7 +11,7 @@ static void test_keyboard( void )
 {
   KeyRect bounds = { 20, 30, 900, 240 };
 
-  // Every key is selectable at its label area, including the last F.
+  // Every key is selectable at its label area, including the upper C.
   for ( int i = 0; i < KEY_COUNT; ++i )
   {
     KeyRect key = keyboard_rect( i, bounds );

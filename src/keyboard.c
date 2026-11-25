@@ -14,7 +14,9 @@ static const NoteBinding bindings[ KEY_COUNT ] =
   { KEY_A, "A" }, { KEY_W, "W" }, { KEY_S, "S" }, { KEY_E, "E" }, { KEY_D, "D" }, { KEY_F, "F" },
   { KEY_T, "T" }, { KEY_G, "G" }, { KEY_Y, "Y" }, { KEY_H, "H" }, { KEY_U, "U" }, { KEY_J, "J" },
   { KEY_K, "K" }, { KEY_O, "O" }, { KEY_L, "L" }, { KEY_P, "P" }, { KEY_SEMICOLON, ";" },
-  { KEY_APOSTROPHE, "'" }
+  { KEY_APOSTROPHE, "'" }, { KEY_Q, "Q" }, { KEY_R, "R" }, { KEY_I, "I" },
+  { KEY_LEFT_BRACKET, "[" }, { KEY_RIGHT_BRACKET, "]" }, { KEY_BACKSLASH, "\\" },
+  { KEY_ONE, "1" }
 };
 
 // Return the display label for a piano key index.

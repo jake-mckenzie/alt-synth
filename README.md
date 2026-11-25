@@ -54,8 +54,8 @@ For playable examples and a note-to-key reference, see the
 
 | Control | Action |
 | --- | --- |
-| `A S D F G H J K L ; '` | White notes |
-| `W E T Y U O P` | Black notes |
+| `A S D F G H J K L ; ' R [ \ 1` | White notes |
+| `W E T Y U O P Q I ]` | Black notes |
 | Mouse hold / drag | Play notes; QWERTY Space holds sustain |
 | `Space` | Hold sustain |
 | `←` / `→` | Shift octave |
@@ -67,7 +67,7 @@ For playable examples and a note-to-key reference, see the
 | `Esc` | Close help, or quit |
 
 Starts in **QWERTY view** (C#2–A#6) with **Chiptune** selected. Press **F2**
-to switch to Piano view (C4–F5 at the starting octave). Other sounds are Piano,
+to switch to Piano view (C4–C6 at the starting octave). Other sounds are Piano,
 Warm keys, Bell, and Soft synth. Sounds are synthesized; no samples are required.
 Lighter QWERTY keys play natural notes; darker ones play sharps. Amber keys are
 held; green keys are sustained. Piano mode uses the bindings above.

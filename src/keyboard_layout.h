@@ -3,8 +3,8 @@
 
 #include "synth.h"
 
-#define KEY_COUNT 18
-#define WHITE_KEY_COUNT 11
+#define KEY_COUNT 25
+#define WHITE_KEY_COUNT 15
 #define QWERTY_ROWS 5
 #define QWERTY_COLUMNS 15
 #define QWERTY_MIN_OFFSET (-23)
@@ -18,7 +18,7 @@ typedef struct
 
 } KeyRect;
 
-// Lay out a chromatic key within a C-to-F piano range; indices must be valid.
+// Lay out a chromatic key within a two-octave piano range; indices must be valid.
 KeyRect keyboard_rect( int index, KeyRect bounds );
 
 // Return the piano key under a point, prioritizing overlapping black keys.

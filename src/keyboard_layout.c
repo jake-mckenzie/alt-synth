@@ -1,6 +1,6 @@
 #include "keyboard_layout.h"
 
-// Lay out a chromatic key within a C-to-F piano range; indices must be valid.
+// Lay out a chromatic key within a two-octave piano range; indices must be valid.
 KeyRect keyboard_rect( int index, KeyRect bounds )
 {
   float white_width = bounds.width / WHITE_KEY_COUNT;
