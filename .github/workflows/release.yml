@@ -24,7 +24,7 @@ jobs:
         env:
           VERSION: ${{ github.ref_name }}
         run: |
-          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$ ]]
           git merge-base --is-ancestor HEAD origin/main
           test -f "docs/releases/$VERSION.md"
 
@@ -65,8 +65,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.ref_name }}
         run: |
+          release_flags=()
+          latest=true
+          title="alt-synth $VERSION"
+          if [[ "$VERSION" == *-beta.* ]]; then
+            release_flags+=(--prerelease)
+            latest=false
+            title+=" (Linux Beta)"
+          fi
           gh release create "$VERSION" \
             "dist/alt-synth_${VERSION}_linux_x86_64.tar.gz" dist/checksums.txt \
-            --verify-tag --draft --title "alt-synth $VERSION" \
+            --verify-tag --draft --title "$title" "${release_flags[@]}" \
             --notes-file "docs/releases/$VERSION.md"
-          gh release edit "$VERSION" --draft=false --latest
+          gh release edit "$VERSION" --draft=false --latest="$latest"
