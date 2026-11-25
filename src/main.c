@@ -1,5 +1,6 @@
 #include "input.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -41,12 +42,37 @@ static AudioStream start_audio( void )
   return stream;
 }
 
-// render requested audio buffers, or render once for the waveform without audio
+// advance the silent synth by elapsed time and retain its latest waveform samples
+static void update_silent_waveform( Synth *synth, float samples[ AUDIO_FRAMES ] )
+{
+  static double remainder;
+  // bound catch-up work after the window has been paused
+  double elapsed_samples = fmin( .25, fmax( 0, GetFrameTime() )) * SAMPLE_RATE + remainder;
+  size_t frames = ( size_t )elapsed_samples;
+  remainder = elapsed_samples - frames;
+
+  if ( frames == 0 )
+  { return; }
+
+  while ( frames > AUDIO_FRAMES )
+  {
+    size_t excess = frames - AUDIO_FRAMES;
+    size_t chunk = excess < AUDIO_FRAMES ? excess : AUDIO_FRAMES;
+    synth_render( synth, samples, chunk );
+    frames -= chunk;
+  }
+
+  size_t retained = AUDIO_FRAMES - frames;
+  memmove( samples, samples + frames, retained * sizeof( *samples ));
+  synth_render( synth, samples + retained, frames );
+}
+
+// render requested audio buffers, or update the waveform when audio is unavailable
 static void update_audio( Synth *synth, AudioStream stream, bool ready, float samples[ AUDIO_FRAMES ] )
 {
   if ( !ready )
   {
-    synth_render( synth, samples, AUDIO_FRAMES );
+    update_silent_waveform( synth, samples );
     return;
   }
 

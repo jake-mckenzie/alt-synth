@@ -18,7 +18,8 @@ typedef struct
     bool held[ MIDI_NOTES ];
     double age[ MIDI_NOTES ];
     float volume;
-    Tone tone, previous_tone;
+    Tone tone;
+    float tone_from[ TONE_COUNT ]; // preset weights at the start of the current fade
     float tone_mix;
 
 } Synth;

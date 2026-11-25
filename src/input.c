@@ -38,22 +38,20 @@ static int update_playing_controls( InputState *input, const UiLayout *layout,
   if ( filter_click || control_pressed( KEY_TAB, mouse_key ))
   { synth_set_tone( synth, ( Tone )( ( synth->tone + 1 ) % TONE_COUNT )); }
 
-  int old_base = input->base;
+  bool octave_down = IsKeyPressed( KEY_LEFT );
+  bool octave_up = IsKeyPressed( KEY_RIGHT );
+  int base = input->base + 12 * ( octave_up - octave_down );
 
-  if ( IsKeyPressed( KEY_LEFT ) && input->base > 24 )
-  { input->base -= 12; }
+  if ( base != input->base && base >= 24 && base <= 84 )
+  {
+    input->base = base;
+    synth_silence( synth );
+  }
 
-  if ( IsKeyPressed( KEY_RIGHT ) && input->base < 84 )
-  { input->base += 12; }
-
-  if ( old_base != input->base )
-  { synth_silence( synth ); }
-
-  if ( control_pressed( KEY_MINUS, mouse_key ))
-  { synth->volume = fmaxf( 0, synth->volume - .05f ); }
-
-  if ( control_pressed( KEY_EQUAL, mouse_key ))
-  { synth->volume = fminf( 1, synth->volume + .05f ); }
+  bool volume_down = control_pressed( KEY_MINUS, mouse_key );
+  bool volume_up = control_pressed( KEY_EQUAL, mouse_key );
+  if ( volume_up != volume_down )
+  { synth->volume = fminf( 1, fmaxf( 0, synth->volume + .05f * ( volume_up - volume_down ))); }
 
   return mouse_key;
 }

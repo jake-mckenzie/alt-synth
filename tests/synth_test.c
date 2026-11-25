@@ -204,6 +204,34 @@ static void test_tones( void )
   assert( synth.tone_mix == 1 );
 }
 
+// change targets during two fades and check continuity at each change
+static void test_interrupted_fade( void )
+{
+  Synth synth;
+  synth_init( &synth );
+  const bool held[ MIDI_NOTES ] = { [ 60 ] = true };
+  float samples[ 4096 ];
+  synth_notes( &synth, held, false );
+  synth_render( &synth, samples, 4096 );
+
+  synth_set_tone( &synth, TONE_SOFT );
+  const Tone targets[] = { TONE_BELL, TONE_WARM };
+  for ( size_t i = 0; i < sizeof( targets ) / sizeof( targets[ 0 ] ); ++i )
+  {
+    synth_render( &synth, samples, 64 );
+    Synth reference = synth;
+    float expected, switched;
+    synth_render( &reference, &expected, 1 );
+    synth_set_tone( &synth, targets[ i ] );
+    synth_render( &synth, &switched, 1 );
+    assert( fabsf( expected - switched ) < .001f );
+    assert( synth.sounding[ 60 ] );
+  }
+
+  synth_render( &synth, samples, 4096 );
+  assert( synth.tone == TONE_WARM && synth.tone_mix == 1 );
+}
+
 // Measure harmonic content relative to the fundamental, independent of volume.
 static double harmonic_ratio( const float *samples, size_t count, double frequency )
 {
@@ -300,6 +328,7 @@ int main( void )
   test_qwerty_mapping();
   test_sound();
   test_tones();
+  test_interrupted_fade();
   test_piano_and_synth_character();
   test_chiptune();
   puts( "All pitch, keyboard, tone, polyphony, sustain, release, and silence tests passed." );

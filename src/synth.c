@@ -42,7 +42,10 @@ void synth_set_tone( Synth *synth, Tone tone )
   if ( tone < 0 || tone >= TONE_COUNT || tone == synth->tone )
   { return; }
 
-  synth->previous_tone = synth->tone;
+  // start from the current blend, including any fade still in progress
+  for ( int i = 0; i < TONE_COUNT; ++i )
+  { synth->tone_from[ i ] *= 1 - synth->tone_mix; }
+  synth->tone_from[ synth->tone ] += synth->tone_mix;
   synth->tone = tone;
   synth->tone_mix = 0;
 }
@@ -53,7 +56,6 @@ void synth_init( Synth *synth )
   memset( synth, 0, sizeof( *synth ));
   synth->volume = 0.65f;
   synth->tone = TONE_CHIPTUNE;
-  synth->previous_tone = TONE_CHIPTUNE;
   synth->tone_mix = 1;
 }
 
@@ -190,8 +192,18 @@ void synth_render( Synth *synth, float *buffer, size_t frames )
 
       if ( mix < 1 )
       {
-        double previous = voice( synth->previous_tone, synth->phase[ note ],
-            synth->age[ note ], frequency );
+        double previous = 0;
+
+        for ( int i = 0; i < TONE_COUNT; ++i )
+        {
+          if ( synth->tone_from[ i ] == 0 )
+          { continue; }
+
+          double from = i == ( int )synth->tone ? sample :
+            voice( ( Tone )i, synth->phase[ note ], synth->age[ note ], frequency );
+          previous += synth->tone_from[ i ] * from;
+        }
+
         sample = previous + mix * ( sample - previous );
       }
 
