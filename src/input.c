@@ -41,6 +41,7 @@ static int update_playing_controls( InputState *input, const UiLayout *layout,
   if ( button_pressed( KEY_F3, layout->tone_button ) || control_pressed( KEY_TAB, mouse_key ))
   { synth_set_tone( synth, ( Tone )( ( synth->tone + 1 ) % TONE_COUNT )); }
 
+  // combine opposite shortcuts before checking octave or volume limits
   bool octave_down = IsKeyPressed( KEY_LEFT );
   bool octave_up = IsKeyPressed( KEY_RIGHT );
   int base = input->base + 12 * ( octave_up - octave_down );
@@ -127,6 +128,7 @@ UiFrame input_update( InputState *input, const UiLayout *layout, Synth *synth,
 
   if ( input->blocked )
   {
+    // rearm after release, keeping this frame silent
     input->blocked = playing_controls_held( input );
 
     memset( held, 0, MIDI_NOTES * sizeof( *held ));

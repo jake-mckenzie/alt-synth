@@ -5,13 +5,15 @@
 
 #include <raylib.h>
 
-#define UI_WINDOW_WIDTH 1280
-#define UI_WINDOW_HEIGHT 760
+#define UI_WINDOW_WIDTH 1280 // initial window width and horizontal scale reference
+#define UI_WINDOW_HEIGHT 760 // initial window height and vertical scale reference
 
 // logical window dimensions and control bounds shared by input and rendering
 typedef struct
 {
-  float width, height, scale, compact;
+  float width, height; // viewport size in logical pixels
+  float scale; // physical pixels per logical pixel
+  float compact; // layout compression from 0 to 1 near the minimum height
   KeyRect keys;
   Rectangle help_button, view_button, tone_button;
 } UiLayout;
@@ -19,9 +21,12 @@ typedef struct
 // current input and display state for a single rendered frame
 typedef struct
 {
-  int base, mouse_key;
-  const bool *held;
-  bool computer_view, sustain, input_enabled, audio_ready, help;
+  int base; // MIDI base note for the current octave
+  int mouse_key; // QWERTY key under the pointer, or KEY_NULL
+  const bool *held; // borrowed MIDI note states, valid through ui_draw
+  bool computer_view, sustain;
+  bool input_enabled; // show live control presses when playing is enabled
+  bool audio_ready, help;
 } UiFrame;
 
 // load the embedded font after opening the window, returning false on failure

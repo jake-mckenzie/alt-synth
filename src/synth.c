@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define TAU 6.28318530717958647692
+#define TAU 6.28318530717958647692 // radians in one oscillator cycle
 
 // Convert a MIDI note number to equal-tempered frequency with A4 at 440 Hz.
 double note_frequency( int midi ) { return 440.0 * pow( 2.0, ( midi - 69 ) / 12.0 ); }
@@ -29,7 +29,7 @@ bool note_is_black( int midi )
   return pitch == 1 || pitch == 3 || pitch == 6 || pitch == 8 || pitch == 10;
 }
 
-// Return the filter label for a valid tone, or Unknown for an invalid value.
+// return the display label for a valid tone, or Unknown for an invalid value
 const char *tone_name( Tone tone )
 {
   static const char *names[ TONE_COUNT ] = { "Piano", "Warm keys", "Bell", "Soft synth", "Chiptune" };
@@ -81,8 +81,7 @@ void synth_silence( Synth *synth )
   memset( synth->held, 0, sizeof( synth->held ));
 }
 
-// Additive partials model struck strings and sustained synthesizer oscillators.
-// Omit partials above Nyquist, including at the highest keyboard transpositions.
+// return a harmonic partial, or zero above the cutoff below Nyquist
 static double partial( double phase, double frequency, double ratio )
 { return frequency * ratio < SAMPLE_RATE * .45 ? sin( phase * ratio ) : 0; }
 
@@ -182,6 +181,7 @@ void synth_render( Synth *synth, float *buffer, size_t frames )
     float target = synth->sounding[ note ] ? 1.0f : 0.0f;
     float rate = synth->sounding[ note ] ? 0.006f : 
       ( synth->tone == TONE_SOFT ? 0.0003f : 0.0012f );
+    // each voice uses the same crossfade progress for a given output sample
     float mix = initial_mix;
 
     for ( size_t frame = 0; frame < frames; ++frame )

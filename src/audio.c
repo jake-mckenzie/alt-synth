@@ -30,6 +30,7 @@ static void update_silent_waveform( AudioOutput *audio, Synth *synth )
   if ( frames == 0 )
   { return; }
 
+  // advance past older samples before filling the visible window
   while ( frames > AUDIO_FRAMES )
   {
     size_t excess = frames - AUDIO_FRAMES;
@@ -38,6 +39,7 @@ static void update_silent_waveform( AudioOutput *audio, Synth *synth )
     frames -= chunk;
   }
 
+  // keep the newest earlier samples when this update is shorter than the buffer
   size_t retained = AUDIO_FRAMES - frames;
   memmove( samples, samples + frames, retained * sizeof( *samples ));
   synth_render( synth, samples + retained, frames );

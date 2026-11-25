@@ -5,9 +5,9 @@
 #include <math.h>
 #include <stdio.h>
 
-#define MARGIN 24
-#define GAP 16
-#define TEXT_SCALE 1.3f
+#define MARGIN 24 // outer horizontal padding in logical pixels
+#define GAP 16 // space between adjacent controls and panels
+#define TEXT_SCALE 1.3f // base font multiplier before window scaling
 const Color background = { 17, 19, 23, 255 };
 static const Color panel_color = { 25, 28, 33, 255 };
 const Color border = { 54, 59, 66, 255 };
@@ -116,7 +116,7 @@ static void draw_wave( Rectangle r, const float *samples, size_t frames )
   text( duration, plot.x + plot.width - 100, plot.y + plot.height + 4, 15, muted );
 }
 
-// Display voice gate envelopes on a MIDI axis that includes all sounding notes; not an FFT.
+// plot per-note envelope levels on a MIDI pitch axis
 static void draw_pitches( Rectangle r, const Synth *synth )
 {
   panel( r, "VOICES / PITCH LEVELS" );
@@ -320,6 +320,7 @@ void ui_draw( const UiLayout *layout, const UiFrame *frame, const Synth *synth,
   if ( frame->help )
   { draw_help( layout->width, layout->height ); }
 
+  // draw the help button last so it remains visible above the dimmed overlay
   draw_button( layout->help_button, frame->help ? "F1: CLOSE HELP" : "F1: HELP", true );
 
   EndMode2D();

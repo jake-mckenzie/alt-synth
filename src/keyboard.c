@@ -99,6 +99,7 @@ static Rectangle rectangle( KeyRect r )
 void draw_keyboard( KeyRect bounds, int base, const bool held[ MIDI_NOTES ],
                     const Synth *synth )
 {
+  // draw white keys first so the shorter black keys overlap them
   for ( int pass = 0; pass < 2; ++pass )
   {
     for ( int i = 0; i < KEY_COUNT; ++i )
@@ -139,6 +140,7 @@ void draw_keyboard( KeyRect bounds, int base, const bool held[ MIDI_NOTES ],
   }
 }
 
+// physical key, visible label, and width in standard key units
 typedef struct
 {
   int code;
@@ -249,7 +251,7 @@ int computer_note( int code, int base )
   return -1;
 }
 
-// Apply physical note presses from the active keyboard mapping.
+// write the current physical key state for each mapped note
 void read_note_keys( bool held[ MIDI_NOTES ], int base, bool computer_view )
 {
   if ( !computer_view )

@@ -6,11 +6,13 @@
 // input state that persists between frames
 typedef struct
 {
-  int base;
-  bool computer_view, help, quit, blocked;
+  int base; // MIDI note assigned to the first piano key
+  bool computer_view, help, quit;
+  bool blocked; // suppress held controls until they are released after silencing
 } InputState;
 
-// update synth gates and return a frame borrowing the caller's zeroed held-note array
+// poll controls, update input and synth state, and fill the caller's zeroed held array
+// the returned frame borrows that array for drawing
 UiFrame input_update( InputState *input, const UiLayout *layout, Synth *synth,
                       bool held[ MIDI_NOTES ] );
 

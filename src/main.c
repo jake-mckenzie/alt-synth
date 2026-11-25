@@ -25,7 +25,7 @@ static bool open_window( void )
   return true;
 }
 
-// Print command-line help or manage the window, input, audio stream, and rendering loop.
+// handle command-line options or run the app until the window closes
 int main( int argc, char **argv )
 {
   if ( argc > 1 )
