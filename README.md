@@ -66,19 +66,21 @@ For playable examples and a note-to-key reference, see the
 | `F1` | Toggle help |
 | `Esc` | Close help, or quit |
 
-Starts at **C4–F5** (middle C) with **Chiptune** selected. Other sounds are Piano,
+Starts in **QWERTY view** (C#2–A#6) with **Chiptune** selected. Press **F2**
+to switch to Piano view (C4–F5 at the starting octave). Other sounds are Piano,
 Warm keys, Bell, and Soft synth. Sounds are synthesized; no samples are required.
 Lighter QWERTY keys play natural notes; darker ones play sharps. Amber keys are
 held; green keys are sustained. Piano mode uses the bindings above.
 QWERTY mode makes 55 keys playable, including modifiers: the lower
 row adds bass notes, unused upper-row keys and digits extend the high range, and
 modifiers add lower notes. The original home-row piano bindings stay the same.
-Caps Lock is intentionally inactive. The default QWERTY range is C#2–A#6. Tab, Space, `-`/`=`, and Backspace keep their
-control actions, accessible by mouse too. Switching views silences notes; release
+Caps Lock is intentionally inactive. Tab, Space, `-`/`=`, and Backspace keep
+their control actions, accessible by mouse too. Switching views silences notes; release
 held controls before resuming.
 Opening help or leaving the window silences notes; release playing controls before
-resuming. Keyboard hardware may limit simultaneous presses. External MIDI input
-is not implemented.
+resuming. The synth can play 10 or more notes at once. Which physical key
+combinations register together depends on your keyboard’s rollover and any
+desktop shortcuts. External MIDI input is not implemented.
 
 ## Development
 

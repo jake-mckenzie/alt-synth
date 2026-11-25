@@ -94,7 +94,7 @@ static void test_sound( void )
   synth_render( &synth, samples, 4410 );
   assert( fabsf( samples[ 4409 ] ) < .002f );
 
-  // All voices at once must still produce finite, bounded samples.
+  // every voice must sound while the combined output remains finite and bounded
   for ( int i = 0; i < MIDI_NOTES; ++i )
   { held[i] = true; }
 
@@ -104,6 +104,12 @@ static void test_sound( void )
   for ( int i = 0; i < 4410; ++i )
   { 
     assert( isfinite( samples[ i ] ) && fabsf( samples[ i ] ) <= synth.volume );
+  }
+
+  for ( int i = 0; i < MIDI_NOTES; ++i )
+  {
+    assert( synth.sounding[ i ] );
+    assert( synth.level[ i ] > .99f );
   }
 
   synth_silence( &synth );

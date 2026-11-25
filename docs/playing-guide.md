@@ -6,7 +6,7 @@ timing, rather than full soundtrack arrangements.
 
 ## Set up
 
-1. Start alt-synth and press **F2** to select the QWERTY display.
+1. Start alt-synth. It opens in QWERTY view.
 2. Use the default octave: **A plays C4**, and **K plays C5**. If you changed
    octaves, use the arrow keys until those labels return.
 3. Start with **Chiptune**. Use the Filter button to select **Bell** or **Piano**
