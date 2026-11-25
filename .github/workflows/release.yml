@@ -70,6 +70,7 @@ jobs:
           mkdir -p dist/alt-synth/licenses dist/alt-synth/assets dist/alt-synth/docs/images
           cp bin/alt-synth dist/alt-synth/alt-synth
           cp README.md dist/alt-synth/README.md
+          cp docs/playing-guide.md dist/alt-synth/docs/playing-guide.md
           cp assets/OFL.txt dist/alt-synth/assets/OFL.txt
           cp docs/images/piano-view.png docs/images/qwerty-view.png dist/alt-synth/docs/images/
           cp .deps/raylib-source/LICENSE dist/alt-synth/licenses/raylib-LICENSE.txt
