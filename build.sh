@@ -6,13 +6,19 @@ cd "$(dirname "$0")"
 export PKG_CONFIG_PATH="$PWD/.deps/raylib/lib/pkgconfig:$PWD/.deps/raylib/lib64/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 # Overrides allow Raylib installed outside pkg-config's search path.
 if [ -z "${RAYLIB_CFLAGS+x}" ] || [ -z "${RAYLIB_LIBS+x}" ]; then
-    if ! pkg-config --exists 'raylib >= 5.5'; then
-        echo 'Raylib 5.5+ development files are required (pkg-config raylib).' >&2
+    if command -v pkg-config >/dev/null && pkg-config --exists 'raylib >= 5.5'; then
+        RAYLIB_CFLAGS=$(pkg-config --cflags raylib)
+        RAYLIB_LIBS=$(pkg-config --libs --static raylib)
+    elif [ "$(uname -s)" = Linux ] && [ -f .deps/raylib/include/raylib.h ] &&
+         [ -f .deps/raylib/lib/libraylib.a ]; then
+        # The official Linux archive ships a static library and headers.
+        RAYLIB_CFLAGS=-I.deps/raylib/include
+        RAYLIB_LIBS='.deps/raylib/lib/libraylib.a -lGL -lX11 -lpthread -ldl -lrt'
+    else
+        echo 'Raylib 5.5+ development files are required.' >&2
         echo 'See README.md, or set RAYLIB_CFLAGS and RAYLIB_LIBS for a local installation.' >&2
         exit 1
     fi
-    RAYLIB_CFLAGS=$(pkg-config --cflags raylib)
-    RAYLIB_LIBS=$(pkg-config --libs --static raylib)
 fi
 mkdir -p bin
 # Embed the font so the executable can run from any directory.

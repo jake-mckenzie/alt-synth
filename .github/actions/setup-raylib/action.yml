@@ -1,0 +1,22 @@
+name: Set up Raylib
+description: Install the official Raylib 5.5 static library for Linux x86-64
+runs:
+  using: composite
+  steps:
+    - name: Install native link dependencies
+      shell: bash
+      run: >-
+        sudo apt-get update && sudo apt-get install --yes
+        build-essential pkg-config libgl1-mesa-dev libx11-dev
+
+    - name: Install the Raylib 5.5 archive
+      shell: bash
+      run: |
+        archive="$RUNNER_TEMP/raylib-5.5_linux_amd64.tar.gz"
+        curl --fail --location --retry 3 --output "$archive" \
+          https://github.com/raysan5/raylib/releases/download/5.5/raylib-5.5_linux_amd64.tar.gz
+        mkdir -p .deps/raylib
+        tar -xzf "$archive" -C .deps/raylib --strip-components=1
+        test -f .deps/raylib/include/raylib.h
+        test -f .deps/raylib/lib/libraylib.a
+        test -f .deps/raylib/LICENSE

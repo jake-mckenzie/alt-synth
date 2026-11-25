@@ -15,7 +15,8 @@ A desktop synth you can play with your keyboard or mouse.
 
 ## Build and run
 
-Requires a C11 compiler, `pkg-config`, and Raylib 5.5+ development files.
+Requires a C11 compiler and Raylib 5.5+, installed through `pkg-config` or
+placed in `.deps/raylib`.
 
 ```sh
 ./build.sh
@@ -23,19 +24,18 @@ Requires a C11 compiler, `pkg-config`, and Raylib 5.5+ development files.
 ```
 
 <details>
-<summary>Build Raylib locally if it is not installed</summary>
+<summary>Use prebuilt Raylib on Linux x86-64</summary>
 
-Run from the alt-synth directory on Debian or Ubuntu.
+Download `raylib-5.5_linux_amd64.tar.gz` from the [Raylib 5.5 release](https://github.com/raysan5/raylib/releases/tag/5.5).
+Install OpenGL and X11 development libraries (`libgl1-mesa-dev` and `libx11-dev`
+on Debian or Ubuntu). From the alt-synth directory, extract the archive into a
+fresh `.deps/raylib` directory and build.
 
 ```sh
-sudo apt-get install build-essential pkg-config cmake ninja-build \
-    libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev
-git clone --depth 1 --branch 5.5 https://github.com/raysan5/raylib.git .deps/raylib-source
-cmake -S .deps/raylib-source -B .deps/raylib-build -G Ninja \
-    -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF \
-    -DCMAKE_INSTALL_PREFIX="$PWD/.deps/raylib"
-cmake --build .deps/raylib-build
-cmake --install .deps/raylib-build
+mkdir -p .deps
+mkdir .deps/raylib &&
+tar -xzf ~/Downloads/raylib-5.5_linux_amd64.tar.gz -C .deps/raylib --strip-components=1
+./build.sh
 ```
 
 </details>

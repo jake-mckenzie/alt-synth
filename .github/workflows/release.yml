@@ -28,26 +28,8 @@ jobs:
           git merge-base --is-ancestor HEAD origin/main
           test -f "docs/releases/$VERSION.md"
 
-      - name: Check out Raylib 5.5
-        uses: actions/checkout@v6
-        with:
-          repository: raysan5/raylib
-          ref: '5.5'
-          path: .deps/raylib-source
-
-      - name: Install native build dependencies
-        run: >-
-          sudo apt-get update && sudo apt-get install --yes
-          build-essential pkg-config cmake ninja-build libgl1-mesa-dev
-          libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev
-
-      - name: Build static Raylib with Ninja
-        run: |
-          cmake -S .deps/raylib-source -B .deps/raylib-build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF \
-            -DCMAKE_INSTALL_PREFIX="$PWD/.deps/raylib" -DCMAKE_INSTALL_LIBDIR=lib
-          cmake --build .deps/raylib-build
-          cmake --install .deps/raylib-build
+      - name: Set up Raylib
+        uses: ./.github/actions/setup-raylib
 
       - name: Run core tests with sanitizers
         run: ./test.sh
@@ -73,7 +55,7 @@ jobs:
           cp docs/playing-guide.md dist/alt-synth/docs/playing-guide.md
           cp assets/OFL.txt dist/alt-synth/assets/OFL.txt
           cp docs/images/piano-view.png docs/images/qwerty-view.png dist/alt-synth/docs/images/
-          cp .deps/raylib-source/LICENSE dist/alt-synth/licenses/raylib-LICENSE.txt
+          cp .deps/raylib/LICENSE dist/alt-synth/licenses/raylib-LICENSE.txt
           tar -czf "dist/alt-synth_${VERSION}_linux_x86_64.tar.gz" -C dist alt-synth
           cd dist
           sha256sum "alt-synth_${VERSION}_linux_x86_64.tar.gz" > checksums.txt
